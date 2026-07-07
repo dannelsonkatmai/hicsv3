@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  @apply bg-slate-900 text-slate-100 antialiased;
+}
+
+/* High-contrast dark theme is the default for command-post readability. */
+::selection {
+  @apply bg-brand-600 text-white;
+}
+
+@media print {
+  aside,
+  header,
+  .no-print {
+    display: none !important;
+  }
+}
