@@ -201,6 +201,18 @@ export interface FormInstance extends BaseRow {
   approved_at: string | null;
 }
 
+/**
+ * One preloaded defaults-library row. `category` picks the library tab and
+ * `data` holds the column values defined in src/data/formDefaultsCatalog.ts.
+ */
+export interface FormDefaultRow extends BaseRow {
+  category: string;
+  data: Record<string, unknown>;
+  sort_order: number;
+  is_active: boolean;
+  created_by: string | null;
+}
+
 export type IapStatus = 'draft' | 'in_review' | 'approved' | 'published' | 'archived';
 
 export interface Iap extends BaseRow {

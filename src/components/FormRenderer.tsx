@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Plus, Trash2, ShieldAlert } from 'lucide-react';
 import type { FormTemplateDef, TemplateColumn, TemplateField } from '../types/forms';
 import { Button, Card, Field, Input, Select, Textarea } from './ui';
@@ -12,9 +13,11 @@ interface FormRendererProps {
   data: Record<string, unknown>;
   onChange: (data: Record<string, unknown>) => void;
   readOnly?: boolean;
+  /** Extra per-table action (e.g. Load Defaults) rendered next to Add Row. */
+  tableAction?: (field: TemplateField) => ReactNode;
 }
 
-export function FormRenderer({ template, data, onChange, readOnly }: FormRendererProps) {
+export function FormRenderer({ template, data, onChange, readOnly, tableAction }: FormRendererProps) {
   const setField = (key: string, value: unknown) => onChange({ ...data, [key]: value });
 
   return (
@@ -41,6 +44,7 @@ export function FormRenderer({ template, data, onChange, readOnly }: FormRendere
                 value={data[field.key]}
                 onChange={(v) => setField(field.key, v)}
                 readOnly={readOnly}
+                tableAction={tableAction}
               />
             ))}
           </div>
@@ -50,11 +54,12 @@ export function FormRenderer({ template, data, onChange, readOnly }: FormRendere
   );
 }
 
-function FormFieldControl({ field, value, onChange, readOnly }: {
+function FormFieldControl({ field, value, onChange, readOnly, tableAction }: {
   field: TemplateField;
   value: unknown;
   onChange: (value: unknown) => void;
   readOnly?: boolean;
+  tableAction?: (field: TemplateField) => ReactNode;
 }) {
   if (field.type === 'note') {
     return (
@@ -71,6 +76,7 @@ function FormFieldControl({ field, value, onChange, readOnly }: {
           rows={Array.isArray(value) ? (value as Array<Record<string, unknown>>) : []}
           onChange={onChange}
           readOnly={readOnly}
+          action={tableAction?.(field)}
         />
         {field.help && <p className="mt-1 text-xs text-slate-500">{field.help}</p>}
       </div>
@@ -147,11 +153,12 @@ function FormFieldControl({ field, value, onChange, readOnly }: {
   );
 }
 
-function RepeatingTable({ columns, rows, onChange, readOnly }: {
+function RepeatingTable({ columns, rows, onChange, readOnly, action }: {
   columns: TemplateColumn[];
   rows: Array<Record<string, unknown>>;
   onChange: (rows: Array<Record<string, unknown>>) => void;
   readOnly?: boolean;
+  action?: ReactNode;
 }) {
   const updateCell = (rowIndex: number, key: string, value: unknown) => {
     const next = rows.map((row, i) => (i === rowIndex ? { ...row, [key]: value } : row));
@@ -211,10 +218,11 @@ function RepeatingTable({ columns, rows, onChange, readOnly }: {
         </tbody>
       </table>
       {!readOnly && (
-        <div className="border-t border-slate-700 p-2">
+        <div className="flex flex-wrap items-center gap-2 border-t border-slate-700 p-2">
           <Button variant="ghost" size="sm" onClick={addRow} type="button">
             <Plus size={15} /> Add Row
           </Button>
+          {action}
         </div>
       )}
     </div>

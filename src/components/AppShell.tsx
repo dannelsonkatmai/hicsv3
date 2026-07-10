@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, Bell, Building2, ClipboardList, CloudOff, FileText,
-  FolderCog, LayoutDashboard, LogOut, Menu, RefreshCw, Settings, Shield, ShieldCheck,
+  FolderCog, LayoutDashboard, Library, LogOut, Menu, RefreshCw, Settings, Shield, ShieldCheck,
   Users, Wifi, X, CreditCard, ScrollText, CalendarClock, ListChecks, Landmark
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,7 @@ const navSections: Array<{
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
+      { to: '/defaults', label: 'Form Defaults', icon: Library },
       { to: '/notifications', label: 'Notifications', icon: Bell }
     ]
   },

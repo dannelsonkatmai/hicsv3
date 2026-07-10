@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FilePlus2, FileText } from 'lucide-react';
+import { Download, FilePlus2, FileText } from 'lucide-react';
 import { useIncident } from './IncidentContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRecords } from '../../../hooks/useRecords';
 import { saveRecord, listRecords } from '../../../lib/repo';
 import { HICS_FORM_TEMPLATES } from '../../../data/hicsForms';
-import { buildPrefillData } from '../../../lib/formPrefill';
+import { buildPrefillData, periodLabel } from '../../../lib/formPrefill';
+import { exportFormPdf } from '../../../lib/pdf';
+import { logAudit } from '../../../lib/audit';
 import { Badge, Button, Card, DataTable, EmptyState, Tabs, statusTone } from '../../../components/ui';
 import { fmtDateTime, titleCase } from '../../../lib/utils';
 import type { FormInstance, HimtAssignment } from '../../../types/domain';
@@ -50,6 +52,16 @@ export function FormsTab() {
   const [busyCode, setBusyCode] = useState('');
 
   const filteredTemplates = templates.filter((t) => category === 'all' || t.category === category);
+
+  const exportInstance = (instance: FormInstance) => {
+    const template = templates.find((t) => t.code === instance.template_code);
+    if (!template) return;
+    exportFormPdf(template, instance.data, {
+      incidentName: incident.name,
+      periodLabel: periodLabel(currentPeriod)
+    });
+    logAudit('form.exported', 'form_instance', instance.id, { template: instance.template_code });
+  };
 
   const startForm = async (template: FormTemplateDef) => {
     setBusyCode(template.code);
@@ -100,12 +112,21 @@ export function FormsTab() {
                 <td className="px-4 py-3 text-sm">{instance.prepared_by_name || '—'}</td>
                 <td className="px-4 py-3 text-sm text-slate-400">{fmtDateTime(instance.updated_at)}</td>
                 <td className="px-4 py-3">
-                  <button
-                    onClick={() => navigate(`/incidents/${incident.id}/forms/${instance.id}`)}
-                    className="text-sm font-medium text-brand-400 hover:text-brand-300"
-                  >
-                    Open →
-                  </button>
+                  <div className="flex items-center justify-end gap-3">
+                    <button
+                      onClick={() => exportInstance(instance)}
+                      className="flex items-center gap-1 text-sm font-medium text-slate-300 hover:text-slate-100"
+                      title="Export this form as PDF"
+                    >
+                      <Download size={15} /> PDF
+                    </button>
+                    <button
+                      onClick={() => navigate(`/incidents/${incident.id}/forms/${instance.id}`)}
+                      className="text-sm font-medium text-brand-400 hover:text-brand-300"
+                    >
+                      Open →
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

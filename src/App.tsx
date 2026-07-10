@@ -9,6 +9,7 @@ import { IncidentsPage } from './pages/incidents/IncidentsPage';
 import { NewIncidentPage } from './pages/incidents/NewIncidentPage';
 import { IncidentWorkspace } from './pages/incidents/workspace/IncidentWorkspace';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { DefaultsPage } from './pages/DefaultsPage';
 import { HvaPage } from './pages/preparedness/HvaPage';
 import { PlansPage } from './pages/preparedness/PlansPage';
 import { ExercisesPage } from './pages/preparedness/ExercisesPage';
@@ -63,6 +64,7 @@ export default function App() {
         <Route path="/incidents/new" element={<NewIncidentPage />} />
         <Route path="/incidents/:incidentId/*" element={<IncidentWorkspace />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+        <Route path="/defaults" element={<DefaultsPage />} />
         <Route path="/preparedness/hva" element={<HvaPage />} />
         <Route path="/preparedness/plans" element={<PlansPage />} />
         <Route path="/preparedness/exercises" element={<ExercisesPage />} />
