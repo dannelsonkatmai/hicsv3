@@ -151,6 +151,74 @@ export function exportIapPacketPdf(
   doc.save(`IAP-${packet.incidentName.replace(/\s+/g, '-')}.pdf`);
 }
 
+/** Long-form document export (EOP builder): cover page + flowing text sections. */
+export function exportDocumentPdf(
+  meta: { title: string; subtitle: string; footnote?: string },
+  sections: Array<{ heading: string; body: string }>,
+  filename: string
+) {
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' });
+  const width = doc.internal.pageSize.getWidth();
+  const height = doc.internal.pageSize.getHeight();
+  const maxWidth = width - MARGIN * 2;
+  const bottom = height - MARGIN;
+
+  // Cover page
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, width, height, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(26);
+  doc.setFont('helvetica', 'bold');
+  const titleLines = doc.splitTextToSize(meta.title, maxWidth) as string[];
+  doc.text(titleLines, width / 2, 230, { align: 'center' });
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(meta.subtitle, width / 2, 230 + titleLines.length * 30 + 14, { align: 'center' });
+  doc.setFontSize(9);
+  if (meta.footnote) {
+    doc.text(doc.splitTextToSize(meta.footnote, maxWidth - 80) as string[], width / 2, 640, { align: 'center' });
+  }
+  doc.text(`Generated ${fmtDateTime(new Date().toISOString())}`, width / 2, 720, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+
+  let cursor = MARGIN;
+  const ensureRoom = (needed: number) => {
+    if (cursor + needed > bottom) {
+      doc.addPage();
+      cursor = MARGIN;
+    }
+  };
+
+  for (const section of sections) {
+    doc.addPage();
+    cursor = MARGIN;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(37, 99, 235);
+    const headingLines = doc.splitTextToSize(section.heading, maxWidth) as string[];
+    doc.text(headingLines, MARGIN, cursor);
+    cursor += headingLines.length * 18 + 10;
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+
+    for (const paragraph of section.body.split('\n')) {
+      if (!paragraph.trim()) {
+        cursor += 7;
+        continue;
+      }
+      const lines = doc.splitTextToSize(paragraph, maxWidth) as string[];
+      for (const line of lines) {
+        ensureRoom(14);
+        doc.text(line, MARGIN, cursor);
+        cursor += 14;
+      }
+    }
+  }
+
+  doc.save(filename);
+}
+
 export function exportTablePdf(
   title: string,
   subtitle: string,

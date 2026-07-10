@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Activity, AlertTriangle, BarChart3, Bell, Building2, ClipboardList, CloudOff, FileText,
   FolderCog, LayoutDashboard, Library, LogOut, Menu, RefreshCw, Settings, Shield, ShieldCheck,
-  Users, Wifi, X, CreditCard, ScrollText, CalendarClock, ListChecks, Landmark
+  Users, Wifi, X, CreditCard, ScrollText, CalendarClock, ListChecks, Landmark, BookOpenCheck
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useConnectivity } from '../contexts/ConnectivityContext';
@@ -27,6 +27,7 @@ const navSections: Array<{
     items: [
       { to: '/preparedness/hva', label: 'HVA', icon: Activity },
       { to: '/preparedness/plans', label: 'EOP & Plans', icon: FileText },
+      { to: '/preparedness/plan-builder', label: 'Plan Builder', icon: BookOpenCheck },
       { to: '/preparedness/exercises', label: 'Exercises & Drills', icon: CalendarClock },
       { to: '/preparedness/aar', label: 'AAR / Improvement', icon: ClipboardList },
       { to: '/preparedness/capa', label: 'Corrective Actions', icon: ListChecks },

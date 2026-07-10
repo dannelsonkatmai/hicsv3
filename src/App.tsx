@@ -12,6 +12,7 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { DefaultsPage } from './pages/DefaultsPage';
 import { HvaPage } from './pages/preparedness/HvaPage';
 import { PlansPage } from './pages/preparedness/PlansPage';
+import { PlanBuilderPage } from './pages/preparedness/PlanBuilderPage';
 import { ExercisesPage } from './pages/preparedness/ExercisesPage';
 import { AarPage } from './pages/preparedness/AarPage';
 import { CapaPage } from './pages/preparedness/CapaPage';
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="/defaults" element={<DefaultsPage />} />
         <Route path="/preparedness/hva" element={<HvaPage />} />
         <Route path="/preparedness/plans" element={<PlansPage />} />
+        <Route path="/preparedness/plan-builder" element={<PlanBuilderPage />} />
         <Route path="/preparedness/exercises" element={<ExercisesPage />} />
         <Route path="/preparedness/aar" element={<AarPage />} />
         <Route path="/preparedness/capa" element={<CapaPage />} />

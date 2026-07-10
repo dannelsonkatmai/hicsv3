@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpenCheck, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, Textarea, statusTone } from '../../components/ui';
@@ -7,6 +8,7 @@ import { fmtDate, titleCase } from '../../lib/utils';
 import type { PlanDocument } from '../../types/domain';
 
 export function PlansPage() {
+  const navigate = useNavigate();
   const { rows: docs, reload } = useRecords<PlanDocument>('plan_documents', { orderBy: 'title' });
   const [editing, setEditing] = useState<Partial<PlanDocument> | null>(null);
 
@@ -26,7 +28,14 @@ export function PlansPage() {
       <PageHeader
         title="EOP & Plan Library"
         subtitle="Emergency Operations Plan, annexes, and policies — versioned with review cycles"
-        actions={<Button onClick={() => setEditing({ doc_type: 'eop', version: '1.0', status: 'active' })}><Plus size={16} /> Add Document</Button>}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => navigate('/preparedness/plan-builder')}>
+              <BookOpenCheck size={16} /> Plan Builder
+            </Button>
+            <Button onClick={() => setEditing({ doc_type: 'eop', version: '1.0', status: 'active' })}><Plus size={16} /> Add Document</Button>
+          </>
+        }
       />
 
       {overdue.length > 0 && (
@@ -36,7 +45,15 @@ export function PlansPage() {
       )}
 
       {docs.length === 0 ? (
-        <EmptyState title="No plan documents" hint="Track the EOP, hazard annexes, and supporting policies with versions and review cycles." />
+        <EmptyState
+          title="No plan documents"
+          hint="Track the EOP, hazard annexes, and supporting policies with versions and review cycles — or draft a compliant EOP step by step."
+          action={
+            <Button variant="secondary" onClick={() => navigate('/preparedness/plan-builder')}>
+              <BookOpenCheck size={16} /> Build an EOP step by step
+            </Button>
+          }
+        />
       ) : (
         <DataTable head={['Title', 'Type', 'Version', 'Status', 'Effective', 'Next Review', '']}>
           {docs.map((doc) => (

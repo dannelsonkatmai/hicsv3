@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { Download, Paperclip } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpenCheck, Download, Paperclip } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
 import { exportTablePdf } from '../../lib/pdf';
@@ -14,6 +15,7 @@ import type { ComplianceEvidence, ComplianceRequirement, ComplianceStatus, Exerc
 const STATUS_OPTIONS: Array<ComplianceStatus['status']> = ['not_assessed', 'met', 'partially_met', 'not_met', 'not_applicable'];
 
 export function CompliancePage() {
+  const navigate = useNavigate();
   const { rows: requirements } = useRecords<ComplianceRequirement>('compliance_requirements', { orderBy: 'sort_order' });
   const { rows: statuses, reload: reloadStatuses } = useRecords<ComplianceStatus>('compliance_statuses', {});
   const { rows: evidence, reload: reloadEvidence } = useRecords<ComplianceEvidence>('compliance_evidence', {});
@@ -100,7 +102,14 @@ export function CompliancePage() {
       <PageHeader
         title="Compliance"
         subtitle="Element-level CMS EP Rule and Joint Commission EM starter library (version 2024.1-starter) — map evidence and export the survey binder"
-        actions={<Button variant="secondary" onClick={exportBinder}><Download size={16} /> Evidence Binder (PDF)</Button>}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => navigate('/preparedness/plan-builder')}>
+              <BookOpenCheck size={16} /> Draft an EOP for these elements
+            </Button>
+            <Button variant="secondary" onClick={exportBinder}><Download size={16} /> Evidence Binder (PDF)</Button>
+          </>
+        }
       />
 
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">

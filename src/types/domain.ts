@@ -557,6 +557,24 @@ export interface PlanDocument extends BaseRow {
   owner_name: string;
 }
 
+export interface EopPlanSectionState {
+  content: string;
+  done: boolean;
+}
+
+/** Step-by-step EOP builder draft; sections/variables follow src/data/eopBuilderCatalog.ts. */
+export interface EopPlan extends BaseRow {
+  facility_id: string | null;
+  title: string;
+  status: 'in_progress' | 'published';
+  catalog_version: string;
+  variables: Record<string, string>;
+  sections: Record<string, EopPlanSectionState>;
+  current_step: number;
+  plan_document_id: string | null;
+  created_by: string | null;
+}
+
 export interface Exercise extends BaseRow {
   facility_id: string | null;
   title: string;
