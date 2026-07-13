@@ -25,7 +25,7 @@ export function OnboardingPage() {
       const { data, error: err } = await supabase.functions.invoke('setup-organization', {
         body: { org_name: orgName, facility_name: facilityName || orgName }
       });
-      if (err) throw err;
+      if (err) throw new Error(err.context?.error ?? err.message);
       if (data?.error) throw new Error(data.error);
       logAudit('organization.created', 'organization', String(data?.id ?? ''), { name: orgName });
       await refreshProfile();

@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft, ArrowRight, Check, CheckCircle2, Download, ListPlus, Plus, RotateCcw
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, CircleCheck as CheckCircle2, Download, ListPlus, Plus, RotateCcw } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { exportDocumentPdf } from '../../lib/pdf';
@@ -220,7 +218,7 @@ function PlanBuilder({ plan, onExit }: { plan: EopPlan; onExit: () => void }) {
   const setSection = (key: string, patch: Partial<{ content: string; done: boolean }>) => {
     update((d) => ({
       ...d,
-      sections: { ...d.sections, [key]: { content: '', done: false, ...d.sections[key], ...patch } }
+      sections: { ...d.sections, [key]: { ...d.sections[key], ...patch } }
     }));
   };
 
