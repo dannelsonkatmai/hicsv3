@@ -23,6 +23,7 @@ import { FacilitiesPage } from './pages/admin/FacilitiesPage';
 import { UsersPage } from './pages/admin/UsersPage';
 import { CatalogPage } from './pages/admin/CatalogPage';
 import { FormTemplatesPage } from './pages/admin/FormTemplatesPage';
+import { JobActionSheetsPage } from './pages/admin/JobActionSheetsPage';
 import { PermissionsPage } from './pages/admin/PermissionsPage';
 import { BillingPage } from './pages/admin/BillingPage';
 import { AuditLogPage } from './pages/admin/AuditLogPage';
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/admin/users" element={<UsersPage />} />
         <Route path="/admin/catalog" element={<CatalogPage />} />
         <Route path="/admin/forms" element={<FormTemplatesPage />} />
+        <Route path="/admin/jas" element={<JobActionSheetsPage />} />
         <Route path="/admin/permissions" element={<PermissionsPage />} />
         <Route path="/admin/billing" element={<BillingPage />} />
         <Route path="/admin/audit" element={<AuditLogPage />} />
