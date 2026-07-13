@@ -22,12 +22,12 @@ export function OnboardingPage() {
     setBusy(true);
     setError('');
     try {
-      const { data, error: err } = await supabase.rpc('setup_organization', {
-        org_name: orgName,
-        facility_name: facilityName || orgName
+      const { data, error: err } = await supabase.functions.invoke('setup-organization', {
+        body: { org_name: orgName, facility_name: facilityName || orgName }
       });
       if (err) throw err;
-      logAudit('organization.created', 'organization', String(data ?? ''), { name: orgName });
+      if (data?.error) throw new Error(data.error);
+      logAudit('organization.created', 'organization', String(data?.id ?? ''), { name: orgName });
       await refreshProfile();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not create organization');
@@ -41,8 +41,11 @@ export function OnboardingPage() {
     setBusy(true);
     setError('');
     try {
-      const { error: err } = await supabase.rpc('join_organization', { code: inviteCode.trim() });
+      const { data, error: err } = await supabase.functions.invoke('join-organization', {
+        body: { code: inviteCode.trim() }
+      });
       if (err) throw err;
+      if (data?.error) throw new Error(data.error);
       await refreshProfile();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid invite code');
