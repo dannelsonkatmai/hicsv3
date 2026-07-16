@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'HICS Command',
+        name: 'Essential HICS',
         short_name: 'HICS',
         description:
           'Hospital Incident Command System — incident management, IAP builder, status boards, and emergency preparedness.',

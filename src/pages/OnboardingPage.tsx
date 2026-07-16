@@ -61,7 +61,7 @@ export function OnboardingPage() {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600">
             <Shield size={28} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-100">Welcome to HICS Command</h1>
+          <h1 className="text-2xl font-bold text-slate-100">Welcome to Essential HICS</h1>
           <p className="mt-1 text-sm text-slate-400">
             Signed in as {session?.user.email}. Set up your organization to continue.
           </p>

@@ -71,7 +71,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Shield size={20} />
             </div>
             <div>
-              <p className="text-sm font-bold leading-tight">HICS Command</p>
+              <p className="text-sm font-bold leading-tight">Essential HICS</p>
               <p className="max-w-[150px] truncate text-xs text-slate-400">{organization?.name ?? 'No organization'}</p>
             </div>
           </button>

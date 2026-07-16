@@ -34,7 +34,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-900">
-        <Spinner label="Loading HICS Command…" />
+        <Spinner label="Loading Essential HICS…" />
       </div>
     );
   }
