@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertTriangle, GraduationCap } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { TriangleAlert as AlertTriangle, GraduationCap } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { useAuth } from '../../contexts/AuthContext';
 import { Badge, Button, DataTable, EmptyState, PageHeader, Tabs, statusTone } from '../../components/ui';
@@ -9,6 +9,7 @@ import type { Incident } from '../../types/domain';
 
 export function IncidentsPage() {
   const { can } = useAuth();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState('active');
   const { rows: incidents, loading } = useRecords<Incident>('incidents', { orderBy: 'started_at', ascending: false });
 
@@ -55,7 +56,11 @@ export function IncidentsPage() {
       ) : (
         <DataTable head={['Incident', 'Type', 'Activation', 'Severity', 'Status', 'Started', '']}>
           {filtered.map((incident) => (
-            <tr key={incident.id} className="hover:bg-slate-800/70">
+            <tr
+              key={incident.id}
+              className="hover:bg-slate-800/70 cursor-pointer transition-colors"
+              onClick={() => navigate(`/incidents/${incident.id}`)}
+            >
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{incident.name}</span>
@@ -71,9 +76,9 @@ export function IncidentsPage() {
               <td className="px-4 py-3"><Badge tone={statusTone(incident.status)}>{titleCase(incident.status)}</Badge></td>
               <td className="px-4 py-3 text-sm text-slate-400">{fmtDateTime(incident.started_at)}</td>
               <td className="px-4 py-3">
-                <Link to={`/incidents/${incident.id}`} className="text-sm font-medium text-brand-400 hover:text-brand-300">
+                <span className="text-sm font-medium text-brand-400 hover:text-brand-300">
                   Open →
-                </Link>
+                </span>
               </td>
             </tr>
           ))}

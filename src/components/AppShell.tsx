@@ -1,10 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import {
-  Activity, AlertTriangle, BarChart3, Bell, Building2, ClipboardList, CloudOff, FileText,
-  FolderCog, LayoutDashboard, LogOut, Menu, RefreshCw, Settings, Shield, ShieldCheck,
-  Users, Wifi, X, CreditCard, ScrollText, CalendarClock, ListChecks, Landmark
-} from 'lucide-react';
+import { Activity, TriangleAlert as AlertTriangle, ChartBar as BarChart3, Bell, Building2, ClipboardList, CloudOff, FileText, FolderCog, LayoutDashboard, Library, LogOut, Menu, RefreshCw, Settings, Shield, ShieldCheck, Users, Wifi, X, CreditCard, ScrollText, CalendarClock, ListChecks, Landmark } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useConnectivity } from '../contexts/ConnectivityContext';
 import { cn, fmtTime } from '../lib/utils';
@@ -18,6 +14,7 @@ const navSections: Array<{
     items: [
       { to: '/', label: 'Dashboard', icon: LayoutDashboard },
       { to: '/incidents', label: 'Incidents', icon: AlertTriangle },
+      { to: '/defaults', label: 'Form Defaults', icon: Library },
       { to: '/notifications', label: 'Notifications', icon: Bell }
     ]
   },
@@ -44,6 +41,7 @@ const navSections: Array<{
       { to: '/admin/users', label: 'Users & Personnel', icon: Users, adminOnly: true },
       { to: '/admin/catalog', label: 'Resources & Vendors', icon: FolderCog, adminOnly: true },
       { to: '/admin/forms', label: 'Form Templates', icon: ScrollText, adminOnly: true },
+      { to: '/admin/jas', label: 'Job Action Sheets', icon: ClipboardList, adminOnly: true },
       { to: '/admin/permissions', label: 'Roles & Permissions', icon: Shield, adminOnly: true },
       { to: '/admin/billing', label: 'Billing', icon: CreditCard, adminOnly: true },
       { to: '/admin/audit', label: 'Audit Log', icon: Landmark, adminOnly: true }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Download, Save } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Download, ListPlus, Save } from 'lucide-react';
 import { useIncident } from './IncidentContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getRecord, saveRecord, insertRecord } from '../../../lib/repo';
@@ -8,11 +8,14 @@ import { logAudit } from '../../../lib/audit';
 import { findPhiIssues } from '../../../lib/noPhi';
 import { exportFormPdf } from '../../../lib/pdf';
 import { periodLabel } from '../../../lib/formPrefill';
+import { categoriesForField } from '../../../data/formDefaultsCatalog';
 import { FormRenderer } from '../../../components/FormRenderer';
+import { LoadDefaultsModal } from '../../../components/LoadDefaultsModal';
 import { Badge, Button, Spinner, statusTone } from '../../../components/ui';
 import { titleCase } from '../../../lib/utils';
 import { useResolvedTemplates } from './FormsTab';
 import type { FormInstance } from '../../../types/domain';
+import type { TemplateField } from '../../../types/forms';
 
 export function FormFillPage() {
   const { instanceId = '' } = useParams();
@@ -28,6 +31,7 @@ export function FormFillPage() {
   const [dirty, setDirty] = useState(false);
   const [error, setError] = useState('');
   const [savedAt, setSavedAt] = useState('');
+  const [defaultsField, setDefaultsField] = useState<TemplateField | null>(null);
 
   useEffect(() => {
     void getRecord<FormInstance>('form_instances', instanceId).then((row) => {
@@ -132,6 +136,28 @@ export function FormFillPage() {
         readOnly={readOnly}
         onChange={(next) => {
           setData(next);
+          setDirty(true);
+        }}
+        tableAction={(field) =>
+          categoriesForField(template.code, field.key).length > 0 ? (
+            <Button variant="ghost" size="sm" type="button" onClick={() => setDefaultsField(field)}>
+              <ListPlus size={15} /> Load Defaults
+            </Button>
+          ) : null
+        }
+      />
+
+      <LoadDefaultsModal
+        open={defaultsField !== null}
+        onClose={() => setDefaultsField(null)}
+        templateCode={template.code}
+        field={defaultsField}
+        onAppend={(rows) => {
+          if (!defaultsField) return;
+          const existing = Array.isArray(data[defaultsField.key])
+            ? (data[defaultsField.key] as Array<Record<string, unknown>>)
+            : [];
+          setData({ ...data, [defaultsField.key]: [...existing, ...rows] });
           setDirty(true);
         }}
       />
