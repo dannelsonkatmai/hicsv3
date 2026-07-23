@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Download, Plus } from 'lucide-react';
+import { Download, ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
 import { exportTablePdf } from '../../lib/pdf';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, Textarea, statusTone } from '../../components/ui';
+import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { fmtDate, titleCase } from '../../lib/utils';
 import type { AarReport, CorrectiveAction, Exercise, Incident } from '../../types/domain';
 
@@ -16,6 +17,11 @@ export function AarPage() {
   const [editing, setEditing] = useState<Partial<AarReport> | null>(null);
   const [capaFor, setCapaFor] = useState<AarReport | null>(null);
   const [capaDraft, setCapaDraft] = useState<Partial<CorrectiveAction>>({ priority: 'medium', status: 'open' });
+  const [reportDefaultsField, setReportDefaultsField] = useState<{ field: keyof AarReport; label: string } | null>(null);
+  const [capaDefaultsField, setCapaDefaultsField] = useState(false);
+
+  const appendReportText = (field: keyof AarReport, text: string) =>
+    setEditing((d) => ({ ...d, [field]: [String(d?.[field] ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }));
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -126,12 +132,27 @@ export function AarPage() {
           </div>
           <Field label="Summary">
             <Textarea value={editing?.summary ?? ''} onChange={(e) => setEditing((d) => ({ ...d, summary: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setReportDefaultsField({ field: 'summary', label: 'Summary' })}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <Field label="Strengths">
             <Textarea value={editing?.strengths ?? ''} onChange={(e) => setEditing((d) => ({ ...d, strengths: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setReportDefaultsField({ field: 'strengths', label: 'Strengths' })}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <Field label="Areas for Improvement">
             <Textarea value={editing?.areas_for_improvement ?? ''} onChange={(e) => setEditing((d) => ({ ...d, areas_for_improvement: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setReportDefaultsField({ field: 'areas_for_improvement', label: 'Areas for Improvement' })}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <Field label="Status">
             <Select value={editing?.status ?? 'draft'} onChange={(e) => setEditing((d) => ({ ...d, status: e.target.value as AarReport['status'] }))}>
@@ -154,6 +175,11 @@ export function AarPage() {
           </Field>
           <Field label="Description">
             <Textarea value={capaDraft.description ?? ''} onChange={(e) => setCapaDraft((d) => ({ ...d, description: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setCapaDefaultsField(true)}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <div className="grid grid-cols-3 gap-4">
             <Field label="Owner">
@@ -176,6 +202,24 @@ export function AarPage() {
           </div>
         </form>
       </Modal>
+
+      <LoadTextDefaultsModal
+        open={reportDefaultsField !== null}
+        onClose={() => setReportDefaultsField(null)}
+        fieldLabel={reportDefaultsField?.label ?? ''}
+        onAppend={(text) => {
+          if (reportDefaultsField) appendReportText(reportDefaultsField.field, text);
+        }}
+      />
+
+      <LoadTextDefaultsModal
+        open={capaDefaultsField}
+        onClose={() => setCapaDefaultsField(false)}
+        fieldLabel="Corrective Action Description"
+        onAppend={(text) =>
+          setCapaDraft((d) => ({ ...d, description: [String(d.description ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }))
+        }
+      />
     </div>
   );
 }

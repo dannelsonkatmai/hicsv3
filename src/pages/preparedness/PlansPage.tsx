@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpenCheck, Plus } from 'lucide-react';
+import { BookOpenCheck, ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, Textarea, statusTone } from '../../components/ui';
+import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { fmtDate, titleCase } from '../../lib/utils';
 import type { PlanDocument } from '../../types/domain';
 
@@ -11,6 +12,7 @@ export function PlansPage() {
   const navigate = useNavigate();
   const { rows: docs, reload } = useRecords<PlanDocument>('plan_documents', { orderBy: 'title' });
   const [editing, setEditing] = useState<Partial<PlanDocument> | null>(null);
+  const [showContentDefaults, setShowContentDefaults] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
   const overdue = docs.filter((d) => d.next_review_date && d.next_review_date < today && d.status !== 'archived');
@@ -115,6 +117,11 @@ export function PlansPage() {
           </Field>
           <Field label="Summary / Content Notes" span={2}>
             <Textarea value={editing?.content ?? ''} onChange={(e) => setEditing((d) => ({ ...d, content: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setShowContentDefaults(true)}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <div className="flex justify-end gap-2 md:col-span-2">
             <Button variant="ghost" type="button" onClick={() => setEditing(null)}>Cancel</Button>
@@ -122,6 +129,15 @@ export function PlansPage() {
           </div>
         </form>
       </Modal>
+
+      <LoadTextDefaultsModal
+        open={showContentDefaults}
+        onClose={() => setShowContentDefaults(false)}
+        fieldLabel="Summary / Content Notes"
+        onAppend={(text) =>
+          setEditing((d) => ({ ...d, content: [String(d?.content ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }))
+        }
+      />
     </div>
   );
 }

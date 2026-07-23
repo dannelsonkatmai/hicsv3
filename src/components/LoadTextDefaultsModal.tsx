@@ -1,23 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ListPlus } from 'lucide-react';
 import { useRecords } from '../hooks/useRecords';
-import { getDefaultsCategory, mapDefaultsRow } from '../data/formDefaultsCatalog';
-import { Button, EmptyState, Modal } from './ui';
+import { DEFAULTS_CATEGORIES, getDefaultsCategory, mapDefaultsRow } from '../data/formDefaultsCatalog';
+import { Button, EmptyState, Modal, Tabs } from './ui';
 import type { FormDefaultRow } from '../types/domain';
 
 // Variant of LoadDefaultsModal that appends selected defaults rows into a
-// textarea (e.g. Exercise objectives) instead of a repeating table. Rows are
-// formatted into a single line each, joined by newlines.
+// textarea (e.g. Exercise objectives, AAR summary, plan content) instead of a
+// repeating table. All categories are available via tabs so any free-text
+// field can pull from any defaults pool.
 
 interface LoadTextDefaultsModalProps {
   open: boolean;
   onClose: () => void;
-  /** Category key in formDefaultsCatalog, e.g. 'objectives'. */
-  categoryKey: string;
-  /** Template code the category feeds — used to pick the row mapping. */
-  templateCode: string;
-  /** Table field key the category targets. */
-  fieldKey: string;
+  /** Which category tab to land on, e.g. 'objectives'. */
+  initialCategoryKey?: string;
   /** A descriptive title for the target field. */
   fieldLabel: string;
   onAppend: (text: string) => void;
@@ -33,14 +30,21 @@ function formatRow(row: Record<string, unknown>): string {
 export function LoadTextDefaultsModal({
   open,
   onClose,
-  categoryKey,
-  templateCode,
-  fieldKey,
+  initialCategoryKey,
   fieldLabel,
   onAppend
 }: LoadTextDefaultsModalProps) {
-  const category = useMemo(() => getDefaultsCategory(categoryKey), [categoryKey]);
+  const [categoryKey, setCategoryKey] = useState(initialCategoryKey ?? DEFAULTS_CATEGORIES[0].key);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const category = useMemo(() => getDefaultsCategory(categoryKey), [categoryKey]);
+
+  useEffect(() => {
+    if (open) {
+      setCategoryKey(initialCategoryKey ?? DEFAULTS_CATEGORIES[0].key);
+      setSelected(new Set());
+    }
+  }, [open, initialCategoryKey]);
 
   const { rows, loading } = useRecords<FormDefaultRow>('form_defaults', {
     match: { category: categoryKey },
@@ -48,10 +52,6 @@ export function LoadTextDefaultsModal({
     ascending: true
   });
   const activeRows = rows.filter((r) => r.is_active !== false);
-
-  useEffect(() => {
-    setSelected(new Set());
-  }, [open, categoryKey]);
 
   const toggle = (id: string) => {
     setSelected((prev) => {
@@ -62,19 +62,34 @@ export function LoadTextDefaultsModal({
     });
   };
 
+  // Rows are stored shape-agnostic; map through the category's first target
+  // so the text reflects the field-meaningful columns (e.g. objectives only).
+  const target = category?.targets[0];
+
   const insertSelected = () => {
-    if (!category) return;
+    if (!category || !target) return;
     const picked = activeRows
       .filter((r) => selected.has(r.id))
-      .map((r) => formatRow(mapDefaultsRow(category, templateCode, fieldKey, r.data)))
+      .map((r) => formatRow(mapDefaultsRow(category, target.template, target.field, r.data)))
       .filter(Boolean);
     if (picked.length) onAppend(picked.join('\n'));
     setSelected(new Set());
     onClose();
   };
 
+  const switchCategory = (key: string) => {
+    setCategoryKey(key);
+    setSelected(new Set());
+  };
+
   return (
     <Modal open={open} onClose={onClose} title={`Load Defaults — ${fieldLabel}`} wide>
+      <Tabs
+        tabs={DEFAULTS_CATEGORIES.map((c) => ({ key: c.key, label: c.label }))}
+        active={categoryKey}
+        onChange={switchCategory}
+      />
+
       {!category ? (
         <EmptyState title="No defaults category found" />
       ) : loading ? (
@@ -144,9 +159,4 @@ export function LoadTextDefaultsModal({
       )}
     </Modal>
   );
-}
-
-/** Whether a defaults category exists that can feed the given template field. */
-export function hasTextDefaults(categoryKey: string): boolean {
-  return Boolean(getDefaultsCategory(categoryKey));
 }

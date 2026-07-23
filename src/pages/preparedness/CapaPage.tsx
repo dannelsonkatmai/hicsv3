@@ -1,14 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
 import { Badge, Button, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea, statusTone } from '../../components/ui';
+import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { fmtDate, titleCase } from '../../lib/utils';
 import type { CorrectiveAction } from '../../types/domain';
 
 export function CapaPage() {
   const { rows: capas, reload } = useRecords<CorrectiveAction>('corrective_actions', { orderBy: 'due_date', ascending: true });
   const [editing, setEditing] = useState<Partial<CorrectiveAction> | null>(null);
+  const [showDescriptionDefaults, setShowDescriptionDefaults] = useState(false);
 
   const today = new Date().toISOString().slice(0, 10);
   const open = capas.filter((c) => c.status === 'open' || c.status === 'in_progress');
@@ -73,6 +75,11 @@ export function CapaPage() {
           </Field>
           <Field label="Description">
             <Textarea value={editing?.description ?? ''} onChange={(e) => setEditing((d) => ({ ...d, description: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setShowDescriptionDefaults(true)}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Owner">
@@ -103,6 +110,15 @@ export function CapaPage() {
           </div>
         </form>
       </Modal>
+
+      <LoadTextDefaultsModal
+        open={showDescriptionDefaults}
+        onClose={() => setShowDescriptionDefaults(false)}
+        fieldLabel="Corrective Action Description"
+        onAppend={(text) =>
+          setEditing((d) => ({ ...d, description: [String(d?.description ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }))
+        }
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react';
-import { Download, Plus } from 'lucide-react';
+import { Download, ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { exportTablePdf } from '../../lib/pdf';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, Textarea } from '../../components/ui';
+import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { titleCase } from '../../lib/utils';
 import type { HvaEntry } from '../../types/domain';
 
@@ -31,6 +32,7 @@ const SCORE_FIELDS: Array<{ key: keyof HvaEntry; label: string; help: string }> 
 export function HvaPage() {
   const { rows: entries, reload } = useRecords<HvaEntry>('hva_entries', { orderBy: 'hazard_name' });
   const [editing, setEditing] = useState<Partial<HvaEntry> | null>(null);
+  const [showNotesDefaults, setShowNotesDefaults] = useState(false);
 
   const ranked = useMemo(() => [...entries].sort((a, b) => relativeRisk(b) - relativeRisk(a)), [entries]);
 
@@ -137,6 +139,11 @@ export function HvaPage() {
           </div>
           <Field label="Notes">
             <Textarea value={editing?.notes ?? ''} onChange={(e) => setEditing((d) => ({ ...d, notes: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setShowNotesDefaults(true)}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           {editing && editing.hazard_name && (
             <p className="text-sm text-slate-300">
@@ -149,6 +156,15 @@ export function HvaPage() {
           </div>
         </form>
       </Modal>
+
+      <LoadTextDefaultsModal
+        open={showNotesDefaults}
+        onClose={() => setShowNotesDefaults(false)}
+        fieldLabel="Hazard Notes"
+        onAppend={(text) =>
+          setEditing((d) => ({ ...d, notes: [String(d?.notes ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }))
+        }
+      />
     </div>
   );
 }

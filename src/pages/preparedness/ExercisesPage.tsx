@@ -15,7 +15,10 @@ import type { Exercise } from '../../types/domain';
 export function ExercisesPage() {
   const { rows: exercises, reload } = useRecords<Exercise>('exercises', { orderBy: 'scheduled_at', ascending: false });
   const [editing, setEditing] = useState<Partial<Exercise> | null>(null);
-  const [showObjectivesDefaults, setShowObjectivesDefaults] = useState(false);
+  const [textDefaultsField, setTextDefaultsField] = useState<{ field: keyof Exercise; label: string; initialCategory?: string } | null>(null);
+
+  const appendText = (field: keyof Exercise, text: string) =>
+    setEditing((d) => ({ ...d, [field]: [String(d?.[field] ?? ''), text].map((s) => s.trim()).filter(Boolean).join('\n') }));
 
   const year = String(new Date().getFullYear());
   const completedThisYear = exercises.filter((e) => e.status === 'completed' && (e.completed_at ?? '').startsWith(year));
@@ -131,11 +134,16 @@ export function ExercisesPage() {
           </Field>
           <Field label="Scenario" span={2}>
             <Textarea value={editing?.scenario ?? ''} onChange={(e) => setEditing((d) => ({ ...d, scenario: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setTextDefaultsField({ field: 'scenario', label: 'Scenario' })}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <Field label="Objectives" span={2}>
             <Textarea value={editing?.objectives ?? ''} onChange={(e) => setEditing((d) => ({ ...d, objectives: e.target.value }))} />
             <div className="mt-1.5">
-              <Button variant="ghost" size="sm" type="button" onClick={() => setShowObjectivesDefaults(true)}>
+              <Button variant="ghost" size="sm" type="button" onClick={() => setTextDefaultsField({ field: 'objectives', label: 'Exercise Objectives', initialCategory: 'objectives' })}>
                 <ListPlus size={15} /> Load Defaults
               </Button>
             </div>
@@ -165,17 +173,12 @@ export function ExercisesPage() {
       </Modal>
 
       <LoadTextDefaultsModal
-        open={showObjectivesDefaults}
-        onClose={() => setShowObjectivesDefaults(false)}
-        categoryKey="objectives"
-        templateCode="HICS 202"
-        fieldKey="objectives"
-        fieldLabel="Exercise Objectives"
+        open={textDefaultsField !== null}
+        onClose={() => setTextDefaultsField(null)}
+        initialCategoryKey={textDefaultsField?.initialCategory}
+        fieldLabel={textDefaultsField?.label ?? ''}
         onAppend={(text) => {
-          setEditing((d) => ({
-            ...d,
-            objectives: [d?.objectives ?? '', text].map((s) => s.trim()).filter(Boolean).join('\n')
-          }));
+          if (textDefaultsField) appendText(textDefaultsField.field, text);
         }}
       />
     </div>
