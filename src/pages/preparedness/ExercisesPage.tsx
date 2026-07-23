@@ -1,8 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { CalendarClock, Plus } from 'lucide-react';
+import { CalendarClock, ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea, statusTone } from '../../components/ui';
+import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { fmtDate, titleCase } from '../../lib/utils';
 import type { Exercise } from '../../types/domain';
 
@@ -14,6 +15,7 @@ import type { Exercise } from '../../types/domain';
 export function ExercisesPage() {
   const { rows: exercises, reload } = useRecords<Exercise>('exercises', { orderBy: 'scheduled_at', ascending: false });
   const [editing, setEditing] = useState<Partial<Exercise> | null>(null);
+  const [showObjectivesDefaults, setShowObjectivesDefaults] = useState(false);
 
   const year = String(new Date().getFullYear());
   const completedThisYear = exercises.filter((e) => e.status === 'completed' && (e.completed_at ?? '').startsWith(year));
@@ -132,6 +134,11 @@ export function ExercisesPage() {
           </Field>
           <Field label="Objectives" span={2}>
             <Textarea value={editing?.objectives ?? ''} onChange={(e) => setEditing((d) => ({ ...d, objectives: e.target.value }))} />
+            <div className="mt-1.5">
+              <Button variant="ghost" size="sm" type="button" onClick={() => setShowObjectivesDefaults(true)}>
+                <ListPlus size={15} /> Load Defaults
+              </Button>
+            </div>
           </Field>
           <div className="space-y-2 md:col-span-2">
             {([
@@ -156,6 +163,21 @@ export function ExercisesPage() {
           </div>
         </form>
       </Modal>
+
+      <LoadTextDefaultsModal
+        open={showObjectivesDefaults}
+        onClose={() => setShowObjectivesDefaults(false)}
+        categoryKey="objectives"
+        templateCode="HICS 202"
+        fieldKey="objectives"
+        fieldLabel="Exercise Objectives"
+        onAppend={(text) => {
+          setEditing((d) => ({
+            ...d,
+            objectives: [d?.objectives ?? '', text].map((s) => s.trim()).filter(Boolean).join('\n')
+          }));
+        }}
+      />
     </div>
   );
 }
