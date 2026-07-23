@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Download, ListPlus, Plus, Trash2 } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
@@ -58,6 +58,18 @@ export function AarPage() {
     });
 
   const linkedExercise = exercises.find((ex) => ex.id === editing?.exercise_id) ?? null;
+
+  /** Auto-seed objectives from the linked exercise when none exist yet (on open or exercise change). */
+  useEffect(() => {
+    if (!linkedExercise?.objectives) return;
+    setEditing((d) => {
+      const existing = Array.isArray(d?.objectives) ? (d!.objectives as AarObjective[]) : [];
+      if (existing.length > 0) return d;
+      const parsed = parseObjectives(linkedExercise.objectives);
+      if (parsed.length === 0) return d;
+      return { ...d, objectives: parsed };
+    });
+  }, [linkedExercise?.id, linkedExercise?.objectives]);
 
   /** Seed the objectives list from the linked exercise's objective text. */
   const importExerciseObjectives = () => {
