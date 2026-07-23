@@ -1,11 +1,36 @@
 import { useState, type FormEvent } from 'react';
 import { CalendarClock, ListPlus, Plus } from 'lucide-react';
 import { useRecords } from '../../hooks/useRecords';
-import { saveRecord, deleteRecord } from '../../lib/repo';
+import { listRecords, saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea, statusTone } from '../../components/ui';
 import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
 import { fmtDate, titleCase } from '../../lib/utils';
-import type { Exercise } from '../../types/domain';
+import type { AarObjective, AarReport, Exercise } from '../../types/domain';
+
+/** Parse an exercise's free-text objectives into HSEEP per-objective findings. */
+function objectivesToFindings(raw: string): AarObjective[] {
+  return raw
+    .split(/\n|•|·|\*\s/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((description) => ({ description, strengths: '', areas_for_improvement: '' }));
+}
+
+/** When a new exercise is created, auto-create a linked draft AAR (HSEEP). */
+async function createDraftAarForExercise(exercise: Exercise & { id: string }): Promise<void> {
+  const existing = await listRecords<AarReport>('aar_reports', { match: { exercise_id: exercise.id }, limit: 1 });
+  if (existing.length > 0) return;
+  await saveRecord('aar_reports', {
+    exercise_id: exercise.id,
+    incident_id: null,
+    title: `AAR — ${exercise.title}`,
+    summary: '',
+    strengths: '',
+    areas_for_improvement: '',
+    objectives: objectivesToFindings(exercise.objectives ?? ''),
+    status: 'auto_created'
+  } as Record<string, unknown>);
+}
 
 // Exercise & drill scheduler with CMS Emergency Preparedness Rule tracking:
 // two exercises per year for inpatient providers — one full-scale
@@ -30,10 +55,14 @@ export function ExercisesPage() {
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!editing) return;
-    await saveRecord('exercises', {
+    const isNew = !editing.id;
+    const saved = await saveRecord('exercises', {
       ...editing,
       completed_at: editing.status === 'completed' && !editing.completed_at ? new Date().toISOString() : editing.completed_at
     } as Record<string, unknown>);
+    if (isNew) {
+      await createDraftAarForExercise(saved as unknown as Exercise & { id: string });
+    }
     setEditing(null);
     await reload();
   };

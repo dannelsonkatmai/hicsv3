@@ -593,6 +593,13 @@ export interface Exercise extends BaseRow {
   notes: string;
 }
 
+/** HSEEP-aligned per-objective finding: each exercise objective carries its own strengths and areas for improvement. */
+export interface AarObjective {
+  description: string;
+  strengths: string;
+  areas_for_improvement: string;
+}
+
 export interface AarReport extends BaseRow {
   exercise_id: string | null;
   incident_id: string | null;
@@ -600,7 +607,8 @@ export interface AarReport extends BaseRow {
   summary: string;
   strengths: string;
   areas_for_improvement: string;
-  status: 'draft' | 'in_review' | 'final';
+  objectives: AarObjective[];
+  status: 'auto_created' | 'draft' | 'in_review' | 'final';
   completed_at: string | null;
 }
 

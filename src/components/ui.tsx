@@ -113,7 +113,7 @@ export function Badge({ tone = 'slate', children }: { tone?: keyof typeof badgeT
 /** Map common status strings to badge tones so lists stay consistent. */
 export function statusTone(status: string): keyof typeof badgeTones {
   const green = ['active', 'approved', 'completed', 'delivered', 'published', 'met', 'verified', 'final', 'available', 'green', 'open', 'sent', 'done'];
-  const yellow = ['in_review', 'in_progress', 'partial', 'partially_met', 'pending', 'ordered', 'yellow', 'assigned', 'demobilizing', 'in_transit', 'draft'];
+  const yellow = ['in_review', 'in_progress', 'partial', 'partially_met', 'pending', 'ordered', 'yellow', 'assigned', 'demobilizing', 'in_transit', 'draft', 'auto_created'];
   const red = ['denied', 'not_met', 'failed', 'red', 'divert', 'blocked', 'expired', 'overdue', 'cancelled', 'critical', 'immediate'];
   if (green.includes(status)) return 'green';
   if (yellow.includes(status)) return 'yellow';

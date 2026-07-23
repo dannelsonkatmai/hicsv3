@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, ClipboardCheck, FileText, PowerOff } from 'lucide-react';
+import { CircleCheck as CheckCircle2, ClipboardCheck, FileText, PowerOff } from 'lucide-react';
 import { useIncident } from './IncidentContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRecords } from '../../../hooks/useRecords';
@@ -88,6 +88,7 @@ export function DemobTab() {
         incident_id: incident.id,
         title: `AAR — ${incident.name}`,
         summary: '',
+        objectives: [],
         status: 'draft'
       });
       logAudit('aar.created', 'incident', incident.id, {});
