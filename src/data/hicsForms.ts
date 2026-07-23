@@ -343,14 +343,15 @@ export const HICS_FORM_TEMPLATES: FormTemplateDef[] = [
                 { key: 'vehicle_type', label: 'Ambulance, Bus, Van, Private Vehicle, Air', type: 'text', width: 'normal' },
                 { key: 'location', label: 'Location', type: 'text', width: 'normal' },
                 { key: 'contact_freq', label: 'Contact Number / Frequency', type: 'text', width: 'normal' },
-                { key: 'level_of_service', label: 'Level of Service (ALS/BLS)', type: 'select', options: ['ALS', 'BLS', 'ALS & BLS'], width: 'narrow' }
+                { key: 'als', label: 'ALS', type: 'checkbox', width: 'narrow' },
+                { key: 'bls', label: 'BLS', type: 'checkbox', width: 'narrow' }
               ],
               defaultRows: [
-                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
-                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
-                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
-                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
-                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' }
+                { vehicle_type: '', location: '', contact_freq: '', als: false, bls: false },
+                { vehicle_type: '', location: '', contact_freq: '', als: false, bls: false },
+                { vehicle_type: '', location: '', contact_freq: '', als: false, bls: false },
+                { vehicle_type: '', location: '', contact_freq: '', als: false, bls: false },
+                { vehicle_type: '', location: '', contact_freq: '', als: false, bls: false }
               ]
             }
           ]

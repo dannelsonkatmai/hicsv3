@@ -168,8 +168,13 @@ export function exportHics206Pdf(
   y = drawTableSection(doc, {
     title: '5. Transportation (indicate air or ground)',
     startY: y,
-    head: ['Ambulance, Bus, Van, Private Vehicle, Air', 'Location', 'Contact Number / Frequency', 'Level of Service (ALS/BLS)'],
-    rows: arrayRows(data.transportation, ['vehicle_type', 'location', 'contact_freq', 'level_of_service']),
+    head: ['Ambulance, Bus, Van, Private Vehicle, Air', 'Location', 'Contact Number / Frequency', 'Level of Service'],
+    rows: (Array.isArray(data.transportation) ? (data.transportation as Array<Record<string, unknown>>) : []).map((row) => [
+      formatValue(row.vehicle_type),
+      formatValue(row.location),
+      formatValue(row.contact_freq),
+      `${row.als ? '☑' : '☐'} ALS   ${row.bls ? '☑' : '☐'} BLS`
+    ]),
     colWidths: [150, 130, 150, 110],
     margin: M,
     minRows: 5
