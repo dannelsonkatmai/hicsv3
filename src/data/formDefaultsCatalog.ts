@@ -79,26 +79,39 @@ export const DEFAULTS_CATEGORIES: DefaultsCategory[] = [
     targets: [{ template: 'HICS 202', field: 'objectives' }]
   },
   {
-    key: 'aid_stations',
-    label: 'Medical Aid Stations',
-    description: 'Staff medical aid station locations for the HICS 206 Staff Medical Plan.',
+    key: 'treatment_areas',
+    label: 'Staff Treatment Areas',
+    description: 'Treatment area names, locations, and unit/team leader contacts for the HICS 206 Staff Medical Plan.',
     columns: [
+      { key: 'area_name', label: 'Area Name', type: 'text', width: 'normal' },
       { key: 'location', label: 'Location', type: 'text', width: 'wide' },
-      { key: 'hours', label: 'Hours', type: 'text', width: 'narrow' },
-      { key: 'staffed', label: 'Staffed', type: 'checkbox', width: 'narrow' }
+      { key: 'unit_team_leader_contact', label: 'Unit / Team Leader Contact Number / Channel', type: 'text', width: 'normal' }
     ],
-    targets: [{ template: 'HICS 206', field: 'aid_stations' }]
+    targets: [{ template: 'HICS 206', field: 'treatment_areas' }]
   },
   {
     key: 'transport',
     label: 'Ambulance / Transport Services',
-    description: 'Transportation and ambulance services for the HICS 206 Staff Medical Plan.',
+    description: 'Transportation services for the HICS 206 Staff Medical Plan.',
     columns: [
-      { key: 'service', label: 'Service', type: 'text', width: 'wide' },
-      { key: 'phone', label: 'Phone', type: 'text', width: 'normal' },
-      { key: 'als', label: 'ALS', type: 'checkbox', width: 'narrow' }
+      { key: 'vehicle_type', label: 'Ambulance, Bus, Van, Private Vehicle, Air', type: 'text', width: 'normal' },
+      { key: 'location', label: 'Location', type: 'text', width: 'normal' },
+      { key: 'contact_freq', label: 'Contact Number / Frequency', type: 'text', width: 'normal' },
+      { key: 'level_of_service', label: 'Level of Service (ALS/BLS)', type: 'text', width: 'narrow' }
     ],
-    targets: [{ template: 'HICS 206', field: 'transport' }]
+    targets: [{ template: 'HICS 206', field: 'transportation' }]
+  },
+  {
+    key: 'alternate_care_sites',
+    label: 'Alternate Care Sites',
+    description: 'Alternate care facility information for the HICS 206 Staff Medical Plan.',
+    columns: [
+      { key: 'facility_name', label: 'Facility Name', type: 'text', width: 'normal' },
+      { key: 'address', label: 'Address', type: 'text', width: 'wide' },
+      { key: 'contact_freq', label: 'Contact Number / Frequency', type: 'text', width: 'normal' },
+      { key: 'specialty_care', label: 'Specialty Care (Specify)', type: 'text', width: 'normal' }
+    ],
+    targets: [{ template: 'HICS 206', field: 'alternate_care_sites' }]
   },
   {
     key: 'hazards',

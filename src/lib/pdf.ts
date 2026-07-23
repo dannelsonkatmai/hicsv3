@@ -99,10 +99,197 @@ export function exportFormPdf(
   data: Record<string, unknown>,
   meta: { incidentName: string; periodLabel?: string }
 ) {
+  if (template.code === 'HICS 206') {
+    exportHics206Pdf(data, meta);
+    return;
+  }
   const doc = new jsPDF({ unit: 'pt', format: 'letter' }) as DocWithTable;
   const subtitle = `${meta.incidentName}${meta.periodLabel ? ` · ${meta.periodLabel}` : ''} · Generated ${fmtDateTime(new Date().toISOString())}`;
   renderFormIntoDoc(doc, template, data, subtitle);
   doc.save(`${template.code.replace(/\s+/g, '-')}.pdf`);
+}
+
+/** HICS 206 — Staff Medical Plan: single-page PDF matching the official form layout (page 1 only). */
+export function exportHics206Pdf(
+  data: Record<string, unknown>,
+  meta: { incidentName: string; periodLabel?: string }
+) {
+  const doc = new jsPDF({ unit: 'pt', format: 'letter' }) as DocWithTable;
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const M = 28;
+
+  // Title banner
+  doc.setFillColor(15, 23, 42);
+  doc.rect(0, 0, W, 56, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.text('HICS 206 — Staff Medical Plan', M, 24);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const sub = `${meta.incidentName}${meta.periodLabel ? ` · ${meta.periodLabel}` : ''} · Generated ${fmtDateTime(new Date().toISOString())}`;
+  doc.text(sub, M, 42);
+
+  let y = 70;
+  doc.setTextColor(0, 0, 0);
+
+  // Section 1-2: Incident name + operational period
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('1. Incident Name:', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(String(data.incident_name ?? '—'), M + 110, y);
+  y += 18;
+  doc.setFont('helvetica', 'bold');
+  doc.text('2. Operational Period:', M, y);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`#${String(data.operational_period ?? '—')}`, M + 130, y);
+  const opRange = `${String(data.op_date_from ?? '')} ${String(data.op_time_from ?? '')} — ${String(data.op_date_to ?? '')} ${String(data.op_time_to ?? '')}`.trim();
+  if (opRange) doc.text(opRange, M + 200, y);
+  y += 20;
+
+  // Section 3: Treatment Areas
+  y = drawTableSection(doc, {
+    title: '3. Treatment Areas',
+    startY: y,
+    head: ['Area Name', 'Location', 'Unit / Team Leader Contact Number / Channel'],
+    rows: arrayRows(data.treatment_areas, ['area_name', 'location', 'unit_team_leader_contact']),
+    colWidths: [120, 200, 240],
+    margin: M,
+    minRows: 5
+  });
+
+  // Section 4: Resources On Hand (two-column grid)
+  y = drawResourcesGrid(doc, data, y, M);
+  if (y > H - 200) { doc.addPage(); y = M; }
+
+  // Section 5: Transportation
+  y = drawTableSection(doc, {
+    title: '5. Transportation (indicate air or ground)',
+    startY: y,
+    head: ['Ambulance, Bus, Van, Private Vehicle, Air', 'Location', 'Contact Number / Frequency', 'Level of Service (ALS/BLS)'],
+    rows: arrayRows(data.transportation, ['vehicle_type', 'location', 'contact_freq', 'level_of_service']),
+    colWidths: [150, 130, 150, 110],
+    margin: M,
+    minRows: 5
+  });
+  if (y > H - 200) { doc.addPage(); y = M; }
+
+  // Section 6: Alternate Care Sites
+  y = drawTableSection(doc, {
+    title: '6. Alternate Care Site(s)',
+    startY: y,
+    head: ['Facility Name', 'Address', 'Contact Number / Frequency', 'Specialty Care (Specify)'],
+    rows: arrayRows(data.alternate_care_sites, ['facility_name', 'address', 'contact_freq', 'specialty_care']),
+    colWidths: [120, 200, 150, 110],
+    margin: M,
+    minRows: 5
+  });
+  if (y > H - 160) { doc.addPage(); y = M; }
+
+  // Section 7: Special Instructions
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.text('7. Special Instructions', M, y);
+  y += 14;
+  doc.setFont('helvetica', 'normal');
+  const siLines = doc.splitTextToSize(String(data.special_instructions ?? '—'), W - M * 2) as string[];
+  autoTable(doc, {
+    startY: y,
+    body: [[siLines.join('\n')]],
+    styles: { fontSize: 8, cellPadding: 4, minCellHeight: 50, valign: 'top' },
+    margin: { left: M, right: M }
+  });
+  y = sectionY(doc, y);
+  if (y > H - 160) { doc.addPage(); y = M; }
+
+  // Section 8 & 9: Prepared by / Approved by
+  y = drawSignatureBlock(doc, '8. Prepared by', {
+    printName: String(data.prepared_print_name ?? '—'),
+    signature: String(data.prepared_signature ?? ''),
+    datetime: String(data.prepared_datetime ?? '—'),
+    facility: String(data.prepared_facility ?? '—')
+  }, y, M, W);
+  if (y > H - 100) { doc.addPage(); y = M; }
+  y = drawSignatureBlock(doc, '9. Approved by', {
+    printName: String(data.approved_print_name ?? '—'),
+    signature: String(data.approved_signature ?? ''),
+    datetime: String(data.approved_datetime ?? '—'),
+    facility: String(data.approved_facility ?? '—')
+  }, y, M, W);
+
+  doc.save('HICS-206-Staff-Medical-Plan.pdf');
+}
+
+function arrayRows(arr: unknown, keys: string[]): string[][] {
+  if (!Array.isArray(arr)) return [];
+  return (arr as Array<Record<string, unknown>>).map((row) => keys.map((k) => formatValue(row[k])));
+}
+
+function drawTableSection(doc: DocWithTable, opts: {
+  title: string; startY: number; head: string[]; rows: string[][]; colWidths: number[]; margin: number; minRows?: number;
+}): number {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  doc.text(opts.title, opts.margin, opts.startY);
+  const body = opts.rows.length ? opts.rows : [];
+  const minRows = opts.minRows ?? 0;
+  while (body.length < minRows) body.push(opts.head.map(() => ''));
+  autoTable(doc, {
+    startY: opts.startY + 8,
+    head: [opts.head],
+    body,
+    styles: { fontSize: 8, cellPadding: 3, valign: 'middle' },
+    headStyles: { fillColor: [51, 65, 85], fontSize: 8 },
+    columnStyles: opts.colWidths.reduce<Record<number, { cellWidth: number }>>((acc, w, i) => { acc[i] = { cellWidth: w }; return acc; }, {}),
+    margin: { left: opts.margin, right: opts.margin }
+  });
+  return sectionY(doc, opts.startY);
+}
+
+function drawResourcesGrid(doc: DocWithTable, data: Record<string, unknown>, y: number, M: number): number {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  doc.text('4. Resources On Hand (numbers)', M, y);
+  y += 8;
+  const rows: Array<[string, string, string, string]> = [
+    ['Staff — MD/DO', String(data.staff_md_do ?? ''), 'Transportation Devices — Litters', String(data.transport_litters ?? '')],
+    ['Staff — PA/NP', String(data.staff_pa_np ?? ''), 'Transportation Devices — Portable Beds', String(data.transport_portable_beds ?? '')],
+    ['Staff — RN/LPN', String(data.staff_rn_lpn ?? ''), 'Transportation Devices — Gurneys', String(data.transport_gurneys ?? '')],
+    ['Staff — Technicians/CNA', String(data.staff_tech_cna ?? ''), 'Transportation Devices — Wheelchairs', String(data.transport_wheelchairs ?? '')],
+    ['Staff — Ancillary/Other', String(data.staff_ancillary_other ?? ''), 'Transportation Devices — Evac. Assist Devices', String(data.transport_evac_assist ?? '')],
+    ['Medication', String(data.medication ?? ''), 'Supplies', String(data.supplies ?? '')]
+  ];
+  autoTable(doc, {
+    startY: y,
+    body: rows.map((r) => [{ content: r[0], styles: { fontStyle: 'bold' } }, r[1], { content: r[2], styles: { fontStyle: 'bold' } }, r[3]]),
+    styles: { fontSize: 8, cellPadding: 3, valign: 'middle' },
+    columnStyles: { 0: { cellWidth: 180 }, 1: { cellWidth: 130 }, 2: { cellWidth: 180 }, 3: { cellWidth: 130 } },
+    margin: { left: M, right: M },
+    theme: 'grid'
+  });
+  return sectionY(doc, y);
+}
+
+function drawSignatureBlock(doc: DocWithTable, title: string, fields: { printName: string; signature: string; datetime: string; facility: string }, y: number, M: number, W: number): number {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, M, y);
+  y += 8;
+  autoTable(doc, {
+    startY: y,
+    head: [['Print Name', 'Signature', 'Date/Time', 'Facility']],
+    body: [[fields.printName, fields.signature || '[signed on form]', fields.datetime, fields.facility]],
+    styles: { fontSize: 8, cellPadding: 4, valign: 'middle', minCellHeight: 32 },
+    headStyles: { fillColor: [51, 65, 85], fontSize: 8 },
+    columnStyles: { 0: { cellWidth: (W - M * 2) * 0.26 }, 1: { cellWidth: (W - M * 2) * 0.26 }, 2: { cellWidth: (W - M * 2) * 0.22 }, 3: { cellWidth: (W - M * 2) * 0.26 } },
+    margin: { left: M, right: M }
+  });
+  return sectionY(doc, y);
 }
 
 export function exportIapPacketPdf(

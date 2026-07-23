@@ -276,45 +276,131 @@ export const HICS_FORM_TEMPLATES: FormTemplateDef[] = [
     code: 'HICS 206',
     title: 'Staff Medical Plan',
     category: 'command',
-    description: 'Medical care available to incident staff, aid stations, and transport.',
-    version: 1,
+    description: 'Provides information on staff treatment areas, resources on hand, transportation, and alternate care sites.',
+    version: 2,
     schema: {
       sections: [
-        header(),
         {
-          title: 'Staff Medical Aid',
+          title: 'Incident Information',
           fields: [
-            {
-              key: 'aid_stations',
-              label: 'Medical Aid Stations',
-              type: 'table',
-              span: 3,
-              columns: [
-                { key: 'location', label: 'Location', type: 'text', width: 'wide' },
-                { key: 'hours', label: 'Hours', type: 'text', width: 'narrow' },
-                { key: 'staffed', label: 'Staffed', type: 'checkbox', width: 'narrow' }
-              ]
-            },
-            {
-              key: 'transport',
-              label: 'Transportation / Ambulance Services',
-              type: 'table',
-              span: 3,
-              columns: [
-                { key: 'service', label: 'Service', type: 'text', width: 'wide' },
-                { key: 'phone', label: 'Phone', type: 'text', width: 'normal' },
-                { key: 'als', label: 'ALS', type: 'checkbox', width: 'narrow' }
-              ]
-            },
-            { key: 'procedures', label: 'Special Medical Emergency Procedures for Staff', type: 'textarea', span: 3 }
+            { key: 'incident_name', label: 'Incident Name', type: 'text', required: true, prefill: 'incident.name' },
+            { key: 'operational_period', label: 'Operational Period (#)', type: 'text', prefill: 'period.label' },
+            { key: 'op_date_from', label: 'Date From', type: 'date', prefill: 'now.date' },
+            { key: 'op_date_to', label: 'Date To', type: 'date' },
+            { key: 'op_time_from', label: 'Time From', type: 'time', prefill: 'now.time' },
+            { key: 'op_time_to', label: 'Time To', type: 'time' }
           ]
         },
         {
-          title: 'Review',
+          title: '3. Treatment Areas',
           fields: [
-            { key: 'prepared_by', label: 'Prepared By (Support Branch Director)', type: 'text', prefill: 'user.full_name' },
-            { key: 'reviewed_by', label: 'Reviewed By (Safety Officer)', type: 'text' },
-            { key: 'review_datetime', label: 'Date/Time', type: 'datetime' }
+            {
+              key: 'treatment_areas',
+              label: 'Treatment Areas',
+              type: 'table',
+              span: 3,
+              columns: [
+                { key: 'area_name', label: 'Area Name', type: 'text', width: 'normal' },
+                { key: 'location', label: 'Location', type: 'text', width: 'wide' },
+                { key: 'unit_team_leader_contact', label: 'Unit / Team Leader Contact Number / Channel', type: 'text', width: 'normal' }
+              ],
+              defaultRows: [
+                { area_name: '', location: '', unit_team_leader_contact: '' },
+                { area_name: '', location: '', unit_team_leader_contact: '' },
+                { area_name: '', location: '', unit_team_leader_contact: '' },
+                { area_name: '', location: '', unit_team_leader_contact: '' },
+                { area_name: '', location: '', unit_team_leader_contact: '' }
+              ]
+            }
+          ]
+        },
+        {
+          title: '4. Resources On Hand (numbers)',
+          fields: [
+            { key: 'staff_md_do', label: 'Staff — MD/DO', type: 'number' },
+            { key: 'transport_litters', label: 'Transportation Devices — Litters', type: 'number' },
+            { key: 'medication', label: 'Medication', type: 'text' },
+            { key: 'supplies', label: 'Supplies', type: 'text' },
+            { key: 'staff_pa_np', label: 'Staff — PA/NP', type: 'number' },
+            { key: 'transport_portable_beds', label: 'Transportation Devices — Portable Beds', type: 'number' },
+            { key: 'staff_rn_lpn', label: 'Staff — RN/LPN', type: 'number' },
+            { key: 'transport_gurneys', label: 'Transportation Devices — Gurneys', type: 'number' },
+            { key: 'staff_tech_cna', label: 'Staff — Technicians/CNA', type: 'number' },
+            { key: 'transport_wheelchairs', label: 'Transportation Devices — Wheelchairs', type: 'number' },
+            { key: 'staff_ancillary_other', label: 'Staff — Ancillary/Other', type: 'number' },
+            { key: 'transport_evac_assist', label: 'Transportation Devices — Evac. Assist Devices', type: 'number' }
+          ]
+        },
+        {
+          title: '5. Transportation (indicate air or ground)',
+          fields: [
+            {
+              key: 'transportation',
+              label: 'Transportation',
+              type: 'table',
+              span: 3,
+              columns: [
+                { key: 'vehicle_type', label: 'Ambulance, Bus, Van, Private Vehicle, Air', type: 'text', width: 'normal' },
+                { key: 'location', label: 'Location', type: 'text', width: 'normal' },
+                { key: 'contact_freq', label: 'Contact Number / Frequency', type: 'text', width: 'normal' },
+                { key: 'level_of_service', label: 'Level of Service (ALS/BLS)', type: 'select', options: ['ALS', 'BLS', 'ALS & BLS'], width: 'narrow' }
+              ],
+              defaultRows: [
+                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
+                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
+                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
+                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' },
+                { vehicle_type: '', location: '', contact_freq: '', level_of_service: '' }
+              ]
+            }
+          ]
+        },
+        {
+          title: '6. Alternate Care Site(s)',
+          fields: [
+            {
+              key: 'alternate_care_sites',
+              label: 'Alternate Care Sites',
+              type: 'table',
+              span: 3,
+              columns: [
+                { key: 'facility_name', label: 'Facility Name', type: 'text', width: 'normal' },
+                { key: 'address', label: 'Address', type: 'text', width: 'wide' },
+                { key: 'contact_freq', label: 'Contact Number / Frequency', type: 'text', width: 'normal' },
+                { key: 'specialty_care', label: 'Specialty Care (Specify)', type: 'text', width: 'normal' }
+              ],
+              defaultRows: [
+                { facility_name: '', address: '', contact_freq: '', specialty_care: '' },
+                { facility_name: '', address: '', contact_freq: '', specialty_care: '' },
+                { facility_name: '', address: '', contact_freq: '', specialty_care: '' },
+                { facility_name: '', address: '', contact_freq: '', specialty_care: '' },
+                { facility_name: '', address: '', contact_freq: '', specialty_care: '' }
+              ]
+            }
+          ]
+        },
+        {
+          title: '7. Special Instructions',
+          fields: [
+            { key: 'special_instructions', label: 'Special Instructions', type: 'textarea', span: 3 }
+          ]
+        },
+        {
+          title: '8. Prepared by',
+          fields: [
+            { key: 'prepared_print_name', label: 'Print Name', type: 'text', prefill: 'user.full_name' },
+            { key: 'prepared_datetime', label: 'Date/Time', type: 'datetime', prefill: 'now.datetime' },
+            { key: 'prepared_signature', label: 'Signature', type: 'signature' },
+            { key: 'prepared_facility', label: 'Facility', type: 'text' }
+          ]
+        },
+        {
+          title: '9. Approved by',
+          fields: [
+            { key: 'approved_print_name', label: 'Print Name', type: 'text' },
+            { key: 'approved_datetime', label: 'Date/Time', type: 'datetime' },
+            { key: 'approved_signature', label: 'Signature', type: 'signature' },
+            { key: 'approved_facility', label: 'Facility', type: 'text' }
           ]
         }
       ]
