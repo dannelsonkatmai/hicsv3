@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { Plus, Save, Trash2, Upload } from 'lucide-react';
 import { useRecords } from '../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../lib/repo';
 import { DEFAULTS_CATEGORIES, getDefaultsCategory } from '../data/formDefaultsCatalog';
 import { Button, Card, EmptyState, PageHeader, Spinner, Tabs } from '../components/ui';
+import { ImportDefaultsModal } from '../components/ImportDefaultsModal';
 import { cn } from '../lib/utils';
 import type { TemplateColumn } from '../types/forms';
 import type { FormDefaultRow } from '../types/domain';
@@ -41,6 +42,7 @@ export function DefaultsPage() {
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     setDrafts(rows.filter((r) => r.is_active !== false).map((r) => ({ id: r.id, data: { ...r.data } })));
@@ -90,6 +92,11 @@ export function DefaultsPage() {
     }
   };
 
+  const handleImport = (importedRows: Record<string, unknown>[]) => {
+    setDrafts((prev) => [...prev, ...importedRows.map((data) => ({ data }))]);
+    setDirty(true);
+  };
+
   const switchCategory = (key: string) => {
     if (key === categoryKey) return;
     if (dirty && !window.confirm('Discard unsaved changes on this tab?')) return;
@@ -104,6 +111,9 @@ export function DefaultsPage() {
         actions={
           <div className="flex items-center gap-2">
             {savedAt && <span className="text-xs text-slate-500">Saved {savedAt}</span>}
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              <Upload size={16} /> Import CSV / XLSX
+            </Button>
             <Button onClick={() => void save()} disabled={saving || !dirty}>
               <Save size={16} /> {saving ? 'Saving…' : 'Save Changes'}
             </Button>
@@ -179,6 +189,13 @@ export function DefaultsPage() {
           </div>
         )}
       </Card>
+
+      <ImportDefaultsModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        category={category}
+        onImport={handleImport}
+      />
 
       <Card title="Where these defaults appear">
         <ul className="space-y-1 text-sm text-slate-300">
