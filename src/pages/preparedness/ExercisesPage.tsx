@@ -52,6 +52,39 @@ export function ExercisesPage() {
   );
   const secondDone = completedThisYear.filter((e) => e.counts_toward_cms).length >= 2;
 
+  const activeExercises = exercises.filter((e) => e.status !== 'completed');
+  const completedExercises = exercises.filter((e) => e.status === 'completed');
+
+  const renderRow = (exercise: Exercise) => (
+    <tr key={exercise.id} className="hover:bg-slate-800/70">
+      <td className="px-4 py-3">
+        <p className="text-sm font-medium">{exercise.title}</p>
+        {exercise.drill_category && <p className="text-xs text-slate-500">{titleCase(exercise.drill_category)}</p>}
+      </td>
+      <td className="px-4 py-3 text-sm">
+        {titleCase(exercise.exercise_type)}
+        {exercise.is_community_based && <span className="block text-xs text-brand-400">Community-based</span>}
+      </td>
+      <td className="px-4 py-3 text-sm text-slate-400">{fmtDate(exercise.completed_at ?? exercise.scheduled_at)}</td>
+      <td className="px-4 py-3"><Badge tone={statusTone(exercise.status)}>{titleCase(exercise.status)}</Badge></td>
+      <td className="px-4 py-3">
+        {exercise.cms_exemption_claimed ? (
+          <Badge tone="purple">Real-event exemption</Badge>
+        ) : exercise.counts_toward_cms ? (
+          <Badge tone="blue">Counts</Badge>
+        ) : (
+          <span className="text-xs text-slate-500">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex gap-2">
+          <button className="text-sm text-brand-400 hover:text-brand-300" onClick={() => setEditing(exercise)}>Edit</button>
+          <button className="text-sm text-slate-500 hover:text-red-300" onClick={() => void deleteRecord('exercises', exercise.id).then(reload)}>Delete</button>
+        </div>
+      </td>
+    </tr>
+  );
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (!editing) return;
@@ -95,37 +128,35 @@ export function ExercisesPage() {
       {exercises.length === 0 ? (
         <EmptyState title="Nothing scheduled" hint="Plan exercises and drills; completed records become compliance evidence and can trigger AARs." />
       ) : (
-        <DataTable head={['Exercise', 'Type', 'Scheduled', 'Status', 'CMS', '']}>
-          {exercises.map((exercise) => (
-            <tr key={exercise.id} className="hover:bg-slate-800/70">
-              <td className="px-4 py-3">
-                <p className="text-sm font-medium">{exercise.title}</p>
-                {exercise.drill_category && <p className="text-xs text-slate-500">{titleCase(exercise.drill_category)}</p>}
-              </td>
-              <td className="px-4 py-3 text-sm">
-                {titleCase(exercise.exercise_type)}
-                {exercise.is_community_based && <span className="block text-xs text-brand-400">Community-based</span>}
-              </td>
-              <td className="px-4 py-3 text-sm text-slate-400">{fmtDate(exercise.scheduled_at)}</td>
-              <td className="px-4 py-3"><Badge tone={statusTone(exercise.status)}>{titleCase(exercise.status)}</Badge></td>
-              <td className="px-4 py-3">
-                {exercise.cms_exemption_claimed ? (
-                  <Badge tone="purple">Real-event exemption</Badge>
-                ) : exercise.counts_toward_cms ? (
-                  <Badge tone="blue">Counts</Badge>
-                ) : (
-                  <span className="text-xs text-slate-500">—</span>
-                )}
-              </td>
-              <td className="px-4 py-3">
-                <div className="flex gap-2">
-                  <button className="text-sm text-brand-400 hover:text-brand-300" onClick={() => setEditing(exercise)}>Edit</button>
-                  <button className="text-sm text-slate-500 hover:text-red-300" onClick={() => void deleteRecord('exercises', exercise.id).then(reload)}>Delete</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </DataTable>
+        <div className="space-y-8">
+          <Card
+            title="Scheduled & In Progress"
+            subtitle="Upcoming and active exercises and drills"
+            actions={<Badge tone="blue">{activeExercises.length}</Badge>}
+          >
+            {activeExercises.length === 0 ? (
+              <p className="py-6 text-center text-sm text-slate-500">All exercises are completed.</p>
+            ) : (
+              <DataTable head={['Exercise', 'Type', 'Scheduled', 'Status', 'CMS', '']}>
+                {activeExercises.map(renderRow)}
+              </DataTable>
+            )}
+          </Card>
+
+          <Card
+            title="Completed Drills"
+            subtitle="Finished exercises — compliance evidence and AAR sources"
+            actions={<Badge tone="green">{completedExercises.length}</Badge>}
+          >
+            {completedExercises.length === 0 ? (
+              <p className="py-6 text-center text-sm text-slate-500">No completed exercises yet.</p>
+            ) : (
+              <DataTable head={['Exercise', 'Type', 'Completed', 'Status', 'CMS', '']}>
+                {completedExercises.map(renderRow)}
+              </DataTable>
+            )}
+          </Card>
+        </div>
       )}
 
       <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing?.id ? 'Edit Exercise' : 'Schedule Exercise'} wide>
