@@ -67,8 +67,8 @@ export function AppShell({ children }: { children: ReactNode }) {
       >
         <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 text-left">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600">
-              <Shield size={20} />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg overflow-hidden">
+              <img src="/Essential_HICS-256.png" alt="Essential HICS" className="h-9 w-9 object-contain" />
             </div>
             <div>
               <p className="text-sm font-bold leading-tight">Essential HICS</p>
