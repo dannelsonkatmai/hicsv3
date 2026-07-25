@@ -1,27 +1,33 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, ArrowRight, CalendarClock, ClipboardList, ShieldCheck } from 'lucide-react';
+import { TriangleAlert as AlertTriangle, ArrowRight, CalendarClock, ClipboardList, ShieldCheck } from 'lucide-react';
 import { useRecords } from '../hooks/useRecords';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge, Button, Card, EmptyState, PageHeader, StatCard, statusTone } from '../components/ui';
 import { fmtDate, fmtDateTime, titleCase } from '../lib/utils';
 import type { CorrectiveAction, Exercise, Incident, ResourceRequest } from '../types/domain';
 
+const ACTIVE_INCIDENT_OPTS = { orderBy: 'started_at', ascending: false, limit: 20 } as const;
+const PLANNED_EXERCISE_OPTS = { match: { status: 'planned' }, orderBy: 'scheduled_at', ascending: true, limit: 5 } as const;
+const COMPLETED_EXERCISE_OPTS = { match: { status: 'completed' }, orderBy: 'completed_at', ascending: false, limit: 50 } as const;
+const OPEN_REQUESTS_OPTS = { orderBy: 'created_at', ascending: false, limit: 50 } as const;
+const OPEN_CAPA_OPTS = { orderBy: 'due_date', ascending: true, limit: 50 } as const;
+
 export function DashboardPage() {
   const { organization, profile, can } = useAuth();
-  const { rows: incidents } = useRecords<Incident>('incidents', { orderBy: 'started_at', ascending: false });
-  const { rows: requests } = useRecords<ResourceRequest>('resource_requests', { orderBy: 'created_at', ascending: false });
-  const { rows: exercises } = useRecords<Exercise>('exercises', { orderBy: 'scheduled_at', ascending: true });
-  const { rows: capas } = useRecords<CorrectiveAction>('corrective_actions', { orderBy: 'due_date', ascending: true });
+  const { rows: incidents } = useRecords<Incident>('incidents', ACTIVE_INCIDENT_OPTS);
+  const { rows: requests } = useRecords<ResourceRequest>('resource_requests', OPEN_REQUESTS_OPTS);
+  const { rows: upcomingExercises } = useRecords<Exercise>('exercises', PLANNED_EXERCISE_OPTS);
+  const { rows: completedExercises } = useRecords<Exercise>('exercises', COMPLETED_EXERCISE_OPTS);
+  const { rows: capas } = useRecords<CorrectiveAction>('corrective_actions', OPEN_CAPA_OPTS);
 
   const activeIncidents = incidents.filter((i) => i.status === 'active' || i.status === 'demobilizing');
   const openRequests = requests.filter((r) => ['submitted', 'in_review', 'approved', 'ordered'].includes(r.status));
-  const upcomingExercises = exercises.filter((e) => e.status === 'planned').slice(0, 5);
   const openCapas = capas.filter((c) => c.status === 'open' || c.status === 'in_progress');
   const overdueCapas = openCapas.filter((c) => c.due_date && c.due_date < new Date().toISOString().slice(0, 10));
 
   const thisYear = new Date().getFullYear();
-  const cmsExercisesThisYear = exercises.filter(
-    (e) => e.counts_toward_cms && e.status === 'completed' && e.completed_at?.startsWith(String(thisYear))
+  const cmsExercisesThisYear = completedExercises.filter(
+    (e) => e.counts_toward_cms && e.completed_at?.startsWith(String(thisYear))
   ).length;
 
   return (
@@ -136,20 +142,20 @@ export function DashboardPage() {
         >
           <ul className="space-y-2 text-sm text-slate-300">
             <li className="flex justify-between border-b border-slate-700/60 pb-2">
-              <span>Total incidents & exercises YTD</span>
-              <span className="font-semibold">{incidents.filter((i) => i.started_at.startsWith(String(thisYear))).length}</span>
+              <span>Total incidents loaded</span>
+              <span className="font-semibold">{incidents.length}</span>
             </li>
             <li className="flex justify-between border-b border-slate-700/60 pb-2">
-              <span>Resource requests fulfilled</span>
-              <span className="font-semibold">{requests.filter((r) => r.status === 'delivered').length}</span>
+              <span>Open resource requests</span>
+              <span className="font-semibold">{openRequests.length}</span>
             </li>
             <li className="flex justify-between border-b border-slate-700/60 pb-2">
               <span>Exercises completed</span>
-              <span className="font-semibold">{exercises.filter((e) => e.status === 'completed').length}</span>
+              <span className="font-semibold">{completedExercises.length}</span>
             </li>
             <li className="flex justify-between">
-              <span>Corrective actions completed</span>
-              <span className="font-semibold">{capas.filter((c) => c.status === 'completed').length}</span>
+              <span>Open corrective actions</span>
+              <span className="font-semibold">{openCapas.length}</span>
             </li>
           </ul>
         </Card>
