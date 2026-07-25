@@ -59,7 +59,9 @@ async function resolveRecipients(notification: NotificationRow, channel: 'email'
     .select(`full_name, department, ${addressField}`)
     .eq('tenant_id', notification.tenant_id)
     .eq('is_active', true);
-  const section = String(notification.audience_filter?.section ?? '');
+  const section = String(notification.audience_filter?.section ?? '')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_');
   if (notification.audience === 'section' && section) {
     query = query.ilike('department', `%${section}%`);
   }
@@ -75,6 +77,21 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) return corsResponse({ error: 'Missing authorization' }, 401);
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return corsResponse({ error: 'Unauthorized' }, 401);
+
+    const { data: callerProfile } = await supabase
+      .from('profiles')
+      .select('platform_role, tenant_id')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (!callerProfile || !['super_admin', 'org_admin', 'facility_admin', 'program_manager'].includes(callerProfile.platform_role)) {
+      return corsResponse({ error: 'Insufficient permissions' }, 403);
+    }
+
     const { notification_id } = await req.json();
     if (!notification_id) return corsResponse({ error: 'notification_id is required' }, 400);
 
@@ -82,6 +99,7 @@ Deno.serve(async (req: Request) => {
       .from('notifications')
       .select('*')
       .eq('id', notification_id)
+      .eq('tenant_id', callerProfile.tenant_id)
       .maybeSingle();
     if (error || !notification) return corsResponse({ error: 'Notification not found' }, 404);
 

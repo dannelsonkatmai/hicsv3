@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { getRecord, listRecords, setRepoTenantId } from '../lib/repo';
+import { getRecord, listRecords, setRepoTenantId, clearOfflineData } from '../lib/repo';
 import { setAuditActor } from '../lib/audit';
 import { can, approvalThreshold, type PermissionAction, type PermissionOverride } from '../lib/permissions';
 import type { Organization, Profile } from '../types/domain';
@@ -84,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
+    await clearOfflineData();
     setProfile(null);
     setOrganization(null);
     setRepoTenantId(null);

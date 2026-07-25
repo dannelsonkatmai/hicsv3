@@ -21,6 +21,15 @@ export function setRepoTenantId(tenantId: string | null) {
   currentTenantId = tenantId;
 }
 
+/** Wipe all locally cached data (IndexedDB). Call on sign-out to prevent stale
+ *  data from being accessible on shared workstations. */
+export async function clearOfflineData(): Promise<void> {
+  await offlineDb.records.clear();
+  await offlineDb.outbox.clear();
+  await offlineDb.conflicts.clear();
+  await offlineDb.meta.clear();
+}
+
 export function isOnline(): boolean {
   return typeof navigator === 'undefined' ? true : navigator.onLine;
 }
