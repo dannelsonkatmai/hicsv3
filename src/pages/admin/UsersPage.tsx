@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Mail } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
@@ -29,8 +30,10 @@ export function UsersPage() {
 }
 
 function UsersPanel() {
-  const { profile: me, organization } = useAuth();
+  const { profile: me, organization, can: canAction } = useAuth();
   const { rows: profiles, reload } = useRecords<Profile>('profiles', { orderBy: 'full_name' });
+  const [resetting, setResetting] = useState<string | null>(null);
+  const [resetNotice, setResetNotice] = useState<{ email: string; ok: boolean; message: string } | null>(null);
 
   const setRole = async (profile: Profile, role: PlatformRole) => {
     await saveRecord('profiles', { ...profile, platform_role: role } as unknown as Record<string, unknown>);
@@ -42,6 +45,29 @@ function UsersPanel() {
     await saveRecord('profiles', { ...profile, is_active: !profile.is_active } as unknown as Record<string, unknown>);
     await reload();
   };
+
+  const sendPasswordReset = async (profile: Profile) => {
+    setResetting(profile.id);
+    setResetNotice(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
+        redirectTo: `${window.location.origin}/login`
+      });
+      if (error) throw error;
+      logAudit('user.password_reset_sent', 'profile', profile.id, { user: profile.email });
+      setResetNotice({ email: profile.email, ok: true, message: 'Password reset email sent.' });
+    } catch (err) {
+      setResetNotice({
+        email: profile.email,
+        ok: false,
+        message: err instanceof Error ? err.message : 'Failed to send reset email.'
+      });
+    } finally {
+      setResetting(null);
+    }
+  };
+
+  const canManage = canAction('manage_admin');
 
   return (
     <Card
@@ -63,7 +89,7 @@ function UsersPanel() {
                 <Select
                   className="!min-h-0 !w-auto !py-1.5 text-sm"
                   value={profile.platform_role}
-                  disabled={profile.id === me?.id}
+                  disabled={profile.id === me?.id || !canManage}
                   onChange={(e) => void setRole(profile, e.target.value as PlatformRole)}
                 >
                   {ROLES.map((r) => <option key={r} value={r}>{titleCase(r)}</option>)}
@@ -71,15 +97,46 @@ function UsersPanel() {
               </td>
               <td className="px-4 py-3"><Badge tone={profile.is_active ? 'green' : 'red'}>{profile.is_active ? 'Active' : 'Disabled'}</Badge></td>
               <td className="px-4 py-3">
-                {profile.id !== me?.id && (
-                  <Button size="sm" variant="ghost" onClick={() => void toggleActive(profile)}>
-                    {profile.is_active ? 'Disable' : 'Enable'}
-                  </Button>
-                )}
+                <div className="flex items-center gap-2">
+                  {profile.id !== me?.id && canManage && (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => void sendPasswordReset(profile)}
+                        disabled={resetting === profile.id}
+                        title={`Send password reset email to ${profile.email}`}
+                      >
+                        <Mail size={14} className="mr-1" />
+                        {resetting === profile.id ? 'Sending…' : 'Reset Password'}
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => void toggleActive(profile)}>
+                        {profile.is_active ? 'Disable' : 'Enable'}
+                      </Button>
+                    </>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
         </DataTable>
+      )}
+      {resetNotice && (
+        <div
+          className={`mt-4 flex items-start justify-between gap-3 rounded-lg border p-3 text-sm ${
+            resetNotice.ok
+              ? 'border-emerald-700 bg-emerald-950/40 text-emerald-200'
+              : 'border-red-700 bg-red-950/40 text-red-200'
+          }`}
+        >
+          <span>
+            {resetNotice.ok ? '✓ ' : '⚠ '}
+            {resetNotice.email}: {resetNotice.message}
+          </span>
+          <button className="text-current opacity-60 hover:opacity-100" onClick={() => setResetNotice(null)}>
+            Dismiss
+          </button>
+        </div>
       )}
     </Card>
   );
