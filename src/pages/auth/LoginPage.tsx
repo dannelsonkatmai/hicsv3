@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Shield, TriangleAlert as AlertTriangle } from 'lucide-react';
+import { TriangleAlert as AlertTriangle } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
 import { Button, Input, Field } from '../../components/ui';
 
@@ -73,8 +73,8 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-900 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600">
-            <Shield size={28} className="text-white" />
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl overflow-hidden bg-brand-600">
+            <img src="/Essential_HICS-256.png" alt="Essential HICS" className="h-14 w-14 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-slate-100">Essential HICS</h1>
           <p className="mt-1 text-sm text-slate-400">Hospital Incident Command System</p>
