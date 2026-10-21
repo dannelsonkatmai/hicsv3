@@ -85,6 +85,7 @@ export default function App() {
           <Route path="/preparedness/capa" element={<CapaPage />} />
           <Route path="/preparedness/compliance" element={<CompliancePage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/admin" element={<Navigate to="/admin/organization" replace />} />
           <Route path="/admin/organization" element={<OrgSettingsPage />} />
           <Route path="/admin/facilities" element={<FacilitiesPage />} />
           <Route path="/admin/users" element={<UsersPage />} />
