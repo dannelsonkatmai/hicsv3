@@ -62,7 +62,7 @@ export function CompliancePage() {
     await saveRecord('compliance_evidence', {
       ...evidenceDraft,
       requirement_id: evidenceFor.id,
-      evidence_date: evidenceDraft.evidence_date ?? todayLocal()
+      evidence_date: evidenceDraft.evidence_date || todayLocal()
     } as Record<string, unknown>);
     setEvidenceFor(null);
     setEvidenceDraft({ evidence_type: 'document' });

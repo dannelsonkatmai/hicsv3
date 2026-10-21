@@ -6,28 +6,40 @@ export function cn(...parts: Array<string | false | null | undefined>): string {
 
 export function fmtDate(value: string | null | undefined): string {
   if (!value) return '—';
+  const s = String(value);
   try {
-    return format(parseISO(value), 'MMM d, yyyy');
+    // Date-only strings (from `date` columns) have no timezone — parseISO would
+    // pin them to midnight UTC and format() would shift them in non-UTC zones.
+    // Format the literal date instead.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, d] = s.split('-');
+      return format(new Date(Number(y), Number(m) - 1, Number(d)), 'MMM d, yyyy');
+    }
+    return format(parseISO(s), 'MMM d, yyyy');
   } catch {
-    return value;
+    return s;
   }
 }
 
 export function fmtDateTime(value: string | null | undefined): string {
   if (!value) return '—';
+  const s = String(value);
   try {
-    return format(parseISO(value), 'MMM d, yyyy HH:mm');
+    return format(parseISO(s), 'MMM d, yyyy HH:mm');
   } catch {
-    return value;
+    return s;
   }
 }
 
 export function fmtTime(value: string | null | undefined): string {
   if (!value) return '—';
+  const s = String(value);
   try {
-    return format(parseISO(value), 'HH:mm');
+    // Time-only strings (from `time` columns) have no timezone — return as-is.
+    if (/^\d{2}:\d{2}/.test(s)) return s.slice(0, 5);
+    return format(parseISO(s), 'HH:mm');
   } catch {
-    return value;
+    return s;
   }
 }
 

@@ -355,7 +355,7 @@ function CostsPanel() {
     await saveRecord('cost_records', {
       ...draft,
       incident_id: incident.id,
-      incurred_on: draft.incurred_on ?? todayLocal()
+      incurred_on: draft.incurred_on || todayLocal()
     } as Record<string, unknown>);
     setShowNew(false);
     setDraft({ cost_type: 'supplies', amount: 0, fema_category: '', reimbursable: false });

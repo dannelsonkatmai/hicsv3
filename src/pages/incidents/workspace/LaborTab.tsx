@@ -314,7 +314,7 @@ function TimePanel() {
       ...draft,
       incident_id: incident.id,
       operational_period_id: currentPeriod?.id ?? null,
-      work_date: draft.work_date ?? todayLocal(),
+      work_date: draft.work_date || todayLocal(),
       labor_cost: laborCost
     } as Record<string, unknown>);
     // Labor cost flows into the incident cost analysis automatically.
@@ -325,7 +325,7 @@ function TimePanel() {
         cost_type: 'labor',
         description: `Labor — ${draft.person_name} (${draft.position_title || draft.section})`,
         amount: laborCost,
-        incurred_on: draft.work_date ?? todayLocal()
+        incurred_on: draft.work_date || todayLocal()
       });
     }
     setShowNew(false);
