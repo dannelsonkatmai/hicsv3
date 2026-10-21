@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import {
+  failedCount,
   flushOutbox,
   getLastSyncedAt,
+  lastFailedMessage,
   onQueueChange,
   pendingCount,
   startSyncLoop,
@@ -11,6 +13,8 @@ import {
 interface ConnectivityValue {
   online: boolean;
   pending: number;
+  failed: number;
+  failedMessage: string | null;
   conflicts: number;
   lastSyncedAt: string | null;
   syncNow: () => Promise<void>;
@@ -21,12 +25,22 @@ const ConnectivityContext = createContext<ConnectivityValue | undefined>(undefin
 export function ConnectivityProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(typeof navigator === 'undefined' ? true : navigator.onLine);
   const [pending, setPending] = useState(0);
+  const [failed, setFailed] = useState(0);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState(0);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const [p, c, last] = await Promise.all([pendingCount(), unresolvedConflictCount(), getLastSyncedAt()]);
+    const [p, f, msg, c, last] = await Promise.all([
+      pendingCount(),
+      failedCount(),
+      lastFailedMessage(),
+      unresolvedConflictCount(),
+      getLastSyncedAt()
+    ]);
     setPending(p);
+    setFailed(f);
+    setFailedMessage(msg);
     setConflicts(c);
     setLastSyncedAt(last);
   }, []);
@@ -57,7 +71,7 @@ export function ConnectivityProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   return (
-    <ConnectivityContext.Provider value={{ online, pending, conflicts, lastSyncedAt, syncNow }}>
+    <ConnectivityContext.Provider value={{ online, pending, failed, failedMessage, conflicts, lastSyncedAt, syncNow }}>
       {children}
     </ConnectivityContext.Provider>
   );

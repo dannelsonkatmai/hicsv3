@@ -222,6 +222,17 @@ export async function pendingCount(): Promise<number> {
   return offlineDb.outbox.where('status').equals('pending').count();
 }
 
+/** Count of outbox items that permanently failed (exhausted retries). */
+export async function failedCount(): Promise<number> {
+  return offlineDb.outbox.where('status').equals('error').count();
+}
+
+/** Most recent error message from a permanently-failed outbox item, if any. */
+export async function lastFailedMessage(): Promise<string | null> {
+  const item = await offlineDb.outbox.where('status').equals('error').reverse().sortBy('seq');
+  return item[0]?.error ?? null;
+}
+
 export async function unresolvedConflictCount(): Promise<number> {
   return offlineDb.conflicts.filter((c) => !c.acknowledged).count();
 }
@@ -239,6 +250,7 @@ export async function getLastSyncedAt(): Promise<string | null> {
 export async function flushOutbox(): Promise<void> {
   if (flushing || !canUseServer()) return;
   flushing = true;
+  let hadError = false;
   try {
     const items = await offlineDb.outbox.where('status').equals('pending').sortBy('seq');
     for (const item of items) {
@@ -275,6 +287,7 @@ export async function flushOutbox(): Promise<void> {
         }
         if (item.seq !== undefined) await offlineDb.outbox.delete(item.seq);
       } catch (err) {
+        hadError = true;
         if (item.seq !== undefined) {
           await offlineDb.outbox.update(item.seq, {
             attempts: item.attempts + 1,
@@ -286,7 +299,11 @@ export async function flushOutbox(): Promise<void> {
         if (!isOnline()) break;
       }
     }
-    await offlineDb.meta.put({ key: 'lastSyncedAt', value: new Date().toISOString() });
+    // Only stamp a successful sync time when no items errored. Otherwise the
+    // badge would say "Synced" while writes silently failed.
+    if (!hadError) {
+      await offlineDb.meta.put({ key: 'lastSyncedAt', value: new Date().toISOString() });
+    }
   } finally {
     flushing = false;
     notifyQueueListeners();

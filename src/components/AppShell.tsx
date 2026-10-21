@@ -140,7 +140,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function SyncIndicator() {
-  const { online, pending, conflicts, lastSyncedAt, syncNow } = useConnectivity();
+  const { online, pending, failed, failedMessage, conflicts, lastSyncedAt, syncNow } = useConnectivity();
   const [syncing, setSyncing] = useState(false);
 
   const handleSync = async () => {
@@ -152,20 +152,26 @@ function SyncIndicator() {
     }
   };
 
+  const showError = failed > 0;
+
   return (
     <div className="flex items-center gap-2">
       <button
         onClick={() => void handleSync()}
-        title={lastSyncedAt ? `Last synced ${fmtTime(lastSyncedAt)}` : 'Not synced yet'}
+        title={showError ? (failedMessage ?? `${failed} write(s) failed to sync`) : lastSyncedAt ? `Last synced ${fmtTime(lastSyncedAt)}` : 'Not synced yet'}
         className={cn(
           'flex min-h-touch items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium',
-          online
-            ? 'border-emerald-800 bg-emerald-950/60 text-emerald-300'
-            : 'border-amber-700 bg-amber-950/60 text-amber-300'
+          showError
+            ? 'border-red-800 bg-red-950/60 text-red-300'
+            : online
+              ? 'border-emerald-800 bg-emerald-950/60 text-emerald-300'
+              : 'border-amber-700 bg-amber-950/60 text-amber-300'
         )}
       >
-        {online ? <Wifi size={14} /> : <CloudOff size={14} />}
-        {online ? (pending > 0 ? `Online · ${pending} to sync` : 'Online · Synced') : `Offline · ${pending} queued`}
+        {showError ? <AlertTriangle size={14} /> : online ? <Wifi size={14} /> : <CloudOff size={14} />}
+        {showError
+          ? `Online · ${failed} failed`
+          : online ? (pending > 0 ? `Online · ${pending} to sync` : 'Online · Synced') : `Offline · ${pending} queued`}
         {syncing && <RefreshCw size={13} className="animate-spin" />}
       </button>
       {conflicts > 0 && (
