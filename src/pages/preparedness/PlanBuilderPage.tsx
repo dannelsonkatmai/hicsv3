@@ -7,7 +7,7 @@ import { exportDocumentPdf } from '../../lib/pdf';
 import {
   Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea
 } from '../../components/ui';
-import { cn, fmtDate, titleCase } from '../../lib/utils';
+import { cn, fmtDate, localDate, titleCase, todayLocal } from '../../lib/utils';
 import {
   EOP_BUILDER_DISCLAIMER, EOP_BUILDER_VERSION, EOP_SECTIONS, EOP_VARIABLES,
   coveredElementCodes, mergeSampleText, type EopSectionDef
@@ -548,11 +548,11 @@ function PublishModal({ open, onClose, draft, requirements, covered, onPublished
   covered: { cms: Set<string>; tjc: Set<string> };
   onPublished: (planDocumentId: string) => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayLocal();
   const defaultReview = (() => {
     const d = new Date();
     d.setFullYear(d.getFullYear() + 2);
-    return d.toISOString().slice(0, 10);
+    return localDate(d);
   })();
 
   const [version, setVersion] = useState('1.0');

@@ -4,7 +4,7 @@ import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
 import { Badge, Button, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea, statusTone } from '../../components/ui';
 import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
-import { fmtDate, titleCase } from '../../lib/utils';
+import { fmtDate, titleCase, todayLocal } from '../../lib/utils';
 import type { CorrectiveAction } from '../../types/domain';
 
 export function CapaPage() {
@@ -12,7 +12,7 @@ export function CapaPage() {
   const [editing, setEditing] = useState<Partial<CorrectiveAction> | null>(null);
   const [showDescriptionDefaults, setShowDescriptionDefaults] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayLocal();
   const open = capas.filter((c) => c.status === 'open' || c.status === 'in_progress');
   const overdue = open.filter((c) => c.due_date && c.due_date < today);
 

@@ -1,7 +1,7 @@
 import type { FormTemplateDef } from '../types/forms';
 import type { HimtAssignment, Incident, OperationalPeriod, Organization, Profile } from '../types/domain';
 import { SECTION_LABELS } from '../data/himtPositions';
-import { fmtDateTime } from './utils';
+import { fmtDateTime, localTime, todayLocal } from './utils';
 
 export interface PrefillContext {
   incident?: Incident | null;
@@ -26,9 +26,9 @@ function resolvePath(path: string, ctx: PrefillContext): unknown {
     case 'user.full_name': return ctx.profile?.full_name ?? '';
     case 'org.name': return ctx.organization?.name ?? '';
     case 'facility.name': return ctx.facilityName ?? '';
-    case 'now.date': return now.toISOString().slice(0, 10);
-    case 'now.time': return now.toTimeString().slice(0, 5);
-    case 'now.datetime': return now.toISOString().slice(0, 16);
+    case 'now.date': return todayLocal();
+    case 'now.time': return localTime(now);
+    case 'now.datetime': return `${todayLocal()}T${localTime(now)}`;
     default: return undefined;
   }
 }

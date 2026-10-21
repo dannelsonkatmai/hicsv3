@@ -6,7 +6,7 @@ import { useRecords } from '../../../hooks/useRecords';
 import { saveRecord } from '../../../lib/repo';
 import { logAudit } from '../../../lib/audit';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, Select, StatCard, Tabs, statusTone } from '../../../components/ui';
-import { fmtDateTime, fmtMoney, sumBy, titleCase } from '../../../lib/utils';
+import { fmtDateTime, fmtMoney, sumBy, titleCase, todayLocal } from '../../../lib/utils';
 import type { LaborPoolEntry, TemporaryPersonnel, TimeEntry } from '../../../types/domain';
 
 // Labor pool & surge personnel (spec §3.4): check-in/assignment, credentialed
@@ -314,7 +314,7 @@ function TimePanel() {
       ...draft,
       incident_id: incident.id,
       operational_period_id: currentPeriod?.id ?? null,
-      work_date: draft.work_date ?? new Date().toISOString().slice(0, 10),
+      work_date: draft.work_date ?? todayLocal(),
       labor_cost: laborCost
     } as Record<string, unknown>);
     // Labor cost flows into the incident cost analysis automatically.
@@ -325,7 +325,7 @@ function TimePanel() {
         cost_type: 'labor',
         description: `Labor — ${draft.person_name} (${draft.position_title || draft.section})`,
         amount: laborCost,
-        incurred_on: draft.work_date ?? new Date().toISOString().slice(0, 10)
+        incurred_on: draft.work_date ?? todayLocal()
       });
     }
     setShowNew(false);
@@ -380,7 +380,7 @@ function TimePanel() {
             <Input value={draft.position_title ?? ''} onChange={(e) => setDraft((d) => ({ ...d, position_title: e.target.value }))} />
           </Field>
           <Field label="Date">
-            <Input type="date" value={draft.work_date ?? new Date().toISOString().slice(0, 10)} onChange={(e) => setDraft((d) => ({ ...d, work_date: e.target.value }))} />
+            <Input type="date" value={draft.work_date ?? todayLocal()} onChange={(e) => setDraft((d) => ({ ...d, work_date: e.target.value }))} />
           </Field>
           <Field label="Hours" required>
             <Input type="number" min={0} step="0.25" value={draft.hours ?? 0} onChange={(e) => setDraft((d) => ({ ...d, hours: Number(e.target.value) }))} required />

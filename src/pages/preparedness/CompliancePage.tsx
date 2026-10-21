@@ -5,7 +5,7 @@ import { useRecords } from '../../hooks/useRecords';
 import { saveRecord } from '../../lib/repo';
 import { exportTablePdf } from '../../lib/pdf';
 import { Badge, Button, Card, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Tabs, Textarea, statusTone } from '../../components/ui';
-import { fmtDate, titleCase } from '../../lib/utils';
+import { fmtDate, titleCase, todayLocal } from '../../lib/utils';
 import type { ComplianceEvidence, ComplianceRequirement, ComplianceStatus, Exercise } from '../../types/domain';
 
 // Compliance dashboard against the pre-loaded, element-level CMS EP Rule and
@@ -51,7 +51,7 @@ export function CompliancePage() {
     await saveRecord('compliance_statuses', {
       ...(existing ?? { requirement_id: requirement.id }),
       status,
-      last_reviewed: new Date().toISOString().slice(0, 10)
+      last_reviewed: todayLocal()
     } as Record<string, unknown>);
     await reloadStatuses();
   };
@@ -62,7 +62,7 @@ export function CompliancePage() {
     await saveRecord('compliance_evidence', {
       ...evidenceDraft,
       requirement_id: evidenceFor.id,
-      evidence_date: evidenceDraft.evidence_date ?? new Date().toISOString().slice(0, 10)
+      evidence_date: evidenceDraft.evidence_date ?? todayLocal()
     } as Record<string, unknown>);
     setEvidenceFor(null);
     setEvidenceDraft({ evidence_type: 'document' });

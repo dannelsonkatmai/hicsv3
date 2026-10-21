@@ -5,7 +5,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useRecords } from '../../../hooks/useRecords';
 import { saveRecord } from '../../../lib/repo';
 import { logAudit } from '../../../lib/audit';
-import { downloadCsv, fmtDateTime, fmtMoney, sumBy, titleCase } from '../../../lib/utils';
+import { downloadCsv, fmtDateTime, fmtMoney, isoToLocalDateTimeInput, localDateTimeToISO, sumBy, titleCase, todayLocal } from '../../../lib/utils';
 import { exportTablePdf } from '../../../lib/pdf';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, Select, StatCard, Tabs, Textarea, statusTone } from '../../../components/ui';
 import type { CostRecord, MutualAidRecord, ProcurementOrder, ResourceCheckout, ResourceRequest, Vendor } from '../../../types/domain';
@@ -155,7 +155,7 @@ function RequestsPanel() {
             </Select>
           </Field>
           <Field label="Needed By">
-            <Input type="datetime-local" value={draft.needed_by ?? ''} onChange={(e) => setDraft((d) => ({ ...d, needed_by: e.target.value }))} />
+            <Input type="datetime-local" value={isoToLocalDateTimeInput(draft.needed_by)} onChange={(e) => setDraft((d) => ({ ...d, needed_by: localDateTimeToISO(e.target.value) }))} />
           </Field>
           <Field label="Requesting Section">
             <Select value={draft.requesting_section ?? 'Operations'} onChange={(e) => setDraft((d) => ({ ...d, requesting_section: e.target.value }))}>
@@ -218,7 +218,7 @@ function OrdersPanel() {
       amount: total,
       procurement_order_id: order.id,
       resource_request_id: draft.resource_request_id ?? null,
-      incurred_on: new Date().toISOString().slice(0, 10)
+      incurred_on: todayLocal()
     });
     logAudit('procurement.ordered', 'procurement_order', String(order.id), { total });
     setShowNew(false);
@@ -355,7 +355,7 @@ function CostsPanel() {
     await saveRecord('cost_records', {
       ...draft,
       incident_id: incident.id,
-      incurred_on: draft.incurred_on ?? new Date().toISOString().slice(0, 10)
+      incurred_on: draft.incurred_on ?? todayLocal()
     } as Record<string, unknown>);
     setShowNew(false);
     setDraft({ cost_type: 'supplies', amount: 0, fema_category: '', reimbursable: false });
@@ -431,7 +431,7 @@ function CostsPanel() {
               <Input type="number" min={0} step="0.01" value={draft.amount ?? 0} onChange={(e) => setDraft((d) => ({ ...d, amount: Number(e.target.value) }))} required />
             </Field>
             <Field label="Date Incurred">
-              <Input type="date" value={draft.incurred_on ?? new Date().toISOString().slice(0, 10)} onChange={(e) => setDraft((d) => ({ ...d, incurred_on: e.target.value }))} />
+              <Input type="date" value={draft.incurred_on ?? todayLocal()} onChange={(e) => setDraft((d) => ({ ...d, incurred_on: e.target.value }))} />
             </Field>
             <Field label="FEMA PA Category">
               <Select value={draft.fema_category ?? ''} onChange={(e) => setDraft((d) => ({ ...d, fema_category: e.target.value }))}>

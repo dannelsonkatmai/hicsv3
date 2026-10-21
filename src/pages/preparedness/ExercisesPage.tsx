@@ -4,7 +4,7 @@ import { useRecords } from '../../hooks/useRecords';
 import { listRecords, saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, StatCard, Textarea, statusTone } from '../../components/ui';
 import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
-import { fmtDate, titleCase } from '../../lib/utils';
+import { fmtDate, isoToLocalDateTimeInput, localDateTimeToISO, titleCase } from '../../lib/utils';
 import type { AarObjective, AarReport, Exercise } from '../../types/domain';
 
 /** Parse an exercise's free-text objectives into HSEEP per-objective findings. */
@@ -182,7 +182,7 @@ export function ExercisesPage() {
             </Select>
           </Field>
           <Field label="Scheduled Date/Time">
-            <Input type="datetime-local" value={editing?.scheduled_at?.slice(0, 16) ?? ''} onChange={(e) => setEditing((d) => ({ ...d, scheduled_at: e.target.value }))} />
+            <Input type="datetime-local" value={isoToLocalDateTimeInput(editing?.scheduled_at)} onChange={(e) => setEditing((d) => ({ ...d, scheduled_at: localDateTimeToISO(e.target.value) ?? undefined }))} />
           </Field>
           <Field label="Status">
             <Select value={editing?.status ?? 'planned'} onChange={(e) => setEditing((d) => ({ ...d, status: e.target.value as Exercise['status'] }))}>

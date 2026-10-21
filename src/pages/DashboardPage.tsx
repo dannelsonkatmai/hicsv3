@@ -3,7 +3,7 @@ import { TriangleAlert as AlertTriangle, ArrowRight, CalendarClock, ClipboardLis
 import { useRecords } from '../hooks/useRecords';
 import { useAuth } from '../contexts/AuthContext';
 import { Badge, Button, Card, EmptyState, PageHeader, StatCard, statusTone } from '../components/ui';
-import { fmtDate, fmtDateTime, titleCase } from '../lib/utils';
+import { fmtDate, fmtDateTime, titleCase, todayLocal } from '../lib/utils';
 import type { CorrectiveAction, Exercise, Incident, ResourceRequest } from '../types/domain';
 
 const ACTIVE_INCIDENT_OPTS = { orderBy: 'started_at', ascending: false, limit: 20 } as const;
@@ -23,7 +23,7 @@ export function DashboardPage() {
   const activeIncidents = incidents.filter((i) => i.status === 'active' || i.status === 'demobilizing');
   const openRequests = requests.filter((r) => ['submitted', 'in_review', 'approved', 'ordered'].includes(r.status));
   const openCapas = capas.filter((c) => c.status === 'open' || c.status === 'in_progress');
-  const overdueCapas = openCapas.filter((c) => c.due_date && c.due_date < new Date().toISOString().slice(0, 10));
+  const overdueCapas = openCapas.filter((c) => c.due_date && c.due_date < todayLocal());
 
   const thisYear = new Date().getFullYear();
   const cmsExercisesThisYear = completedExercises.filter(
@@ -127,7 +127,7 @@ export function DashboardPage() {
                     <p className="text-sm font-medium text-slate-100">{capa.title}</p>
                     <p className="text-xs text-slate-400">{capa.owner_name || 'Unassigned'} · Due {fmtDate(capa.due_date)}</p>
                   </div>
-                  <Badge tone={capa.due_date && capa.due_date < new Date().toISOString().slice(0, 10) ? 'red' : statusTone(capa.status)}>
+                  <Badge tone={capa.due_date && capa.due_date < todayLocal() ? 'red' : statusTone(capa.status)}>
                     {titleCase(capa.status)}
                   </Badge>
                 </div>

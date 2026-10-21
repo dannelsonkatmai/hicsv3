@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Plus, Trash2, ShieldAlert } from 'lucide-react';
 import type { FormTemplateDef, TemplateColumn, TemplateField } from '../types/forms';
 import { Button, Card, Field, Input, Select, Textarea } from './ui';
-import { cn } from '../lib/utils';
+import { cn, isoToLocalDateTimeInput, localDateTimeToISO } from '../lib/utils';
 
 // The template-driven forms engine renderer: interprets FormTemplateDef
 // section/field definitions, so every HICS form (and future org-custom forms)
@@ -106,7 +106,7 @@ function FormFieldControl({ field, value, onChange, readOnly, tableAction }: {
       control = <Input type="time" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} {...common} />;
       break;
     case 'datetime':
-      control = <Input type="datetime-local" value={String(value ?? '')} onChange={(e) => onChange(e.target.value)} {...common} />;
+      control = <Input type="datetime-local" value={isoToLocalDateTimeInput(String(value ?? ''))} onChange={(e) => onChange(localDateTimeToISO(e.target.value) ?? '')} {...common} />;
       break;
     case 'select':
       control = (

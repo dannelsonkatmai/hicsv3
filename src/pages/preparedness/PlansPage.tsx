@@ -5,7 +5,7 @@ import { useRecords } from '../../hooks/useRecords';
 import { saveRecord, deleteRecord } from '../../lib/repo';
 import { Badge, Button, Card, DataTable, EmptyState, Field, Input, Modal, PageHeader, Select, Textarea, statusTone } from '../../components/ui';
 import { LoadTextDefaultsModal } from '../../components/LoadTextDefaultsModal';
-import { fmtDate, titleCase } from '../../lib/utils';
+import { fmtDate, titleCase, todayLocal } from '../../lib/utils';
 import type { PlanDocument } from '../../types/domain';
 
 export function PlansPage() {
@@ -14,7 +14,7 @@ export function PlansPage() {
   const [editing, setEditing] = useState<Partial<PlanDocument> | null>(null);
   const [showContentDefaults, setShowContentDefaults] = useState(false);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayLocal();
   const overdue = docs.filter((d) => d.next_review_date && d.next_review_date < today && d.status !== 'archived');
 
   const save = async (e: FormEvent) => {

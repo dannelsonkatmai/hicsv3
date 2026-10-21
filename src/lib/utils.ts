@@ -31,6 +31,51 @@ export function fmtTime(value: string | null | undefined): string {
   }
 }
 
+/** Local date (YYYY-MM-DD) for the user's timezone — never the UTC date. */
+export function todayLocal(): string {
+  return localDate(new Date());
+}
+
+/** Format a Date as a local YYYY-MM-DD string in the user's timezone. */
+export function localDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Format a Date as a local HH:mm string in the user's timezone. */
+export function localTime(d: Date): string {
+  const h = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${h}:${min}`;
+}
+
+/**
+ * Convert a `datetime-local` input value (naive local wall-clock, e.g.
+ * "2026-10-01T08:00") into a full ISO string with the correct UTC offset,
+ * so a timestamptz column stores the intended instant rather than reinterpreting
+ * the local time as UTC. Returns null for empty input.
+ */
+export function localDateTimeToISO(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/**
+ * Convert a stored timestamptz/string back into a value suitable for a
+ * `datetime-local` input (naive local "YYYY-MM-DDTHH:mm" in the user's zone).
+ */
+export function isoToLocalDateTimeInput(value: string | null | undefined): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  const date = localDate(d);
+  const time = localTime(d);
+  return `${date}T${time}`;
+}
+
 export function fmtMoney(value: number | null | undefined): string {
   return (value ?? 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
