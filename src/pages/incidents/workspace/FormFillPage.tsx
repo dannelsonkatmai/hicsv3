@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Download, ListPlus, Save } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Download, ListPlus, Lock, RotateCcw, Save } from 'lucide-react';
 import { useIncident } from './IncidentContext';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getRecord, saveRecord, insertRecord } from '../../../lib/repo';
@@ -8,6 +8,7 @@ import { logAudit } from '../../../lib/audit';
 import { findPhiIssues } from '../../../lib/noPhi';
 import { exportFormPdf } from '../../../lib/pdf';
 import { periodLabel } from '../../../lib/formPrefill';
+import { stampApprovalData, clearApprovalStamp, validateForApproval } from '../../../lib/formApproval';
 import { categoriesForField } from '../../../data/formDefaultsCatalog';
 import { FormRenderer } from '../../../components/FormRenderer';
 import { LoadDefaultsModal } from '../../../components/LoadDefaultsModal';
@@ -47,7 +48,8 @@ export function FormFillPage() {
   const template = templates.find((t) => t.code === instance.template_code);
   if (!template) return <p className="text-slate-400">Template {instance.template_code} not found.</p>;
 
-  const readOnly = instance.status === 'final';
+  const locked = instance.status === 'approved' || instance.status === 'final';
+  const readOnly = locked;
 
   const save = async (statusOverride?: FormInstance['status']) => {
     setError('');
@@ -62,30 +64,46 @@ export function FormFillPage() {
         return;
       }
     }
+    if (statusOverride === 'approved') {
+      const blocking = validateForApproval(template, data);
+      if (blocking.length) {
+        setError(`Cannot approve — ${blocking.join(' ')}`);
+        return;
+      }
+    }
     setSaving(true);
     try {
-      const nextVersion = instance.version + (dirty ? 1 : 0);
+      const now = new Date().toISOString();
+      const approverName = profile?.full_name ?? '';
+      const stampedData =
+        statusOverride === 'approved'
+          ? stampApprovalData(data, { approverName, approvedAt: now })
+          : statusOverride === 'draft'
+            ? clearApprovalStamp(data)
+            : data;
+      const nextVersion = instance.version + (dirty || statusOverride ? 1 : 0);
       const updated = await saveRecord('form_instances', {
         ...instance,
-        data,
+        data: stampedData,
         version: nextVersion,
         status: statusOverride ?? instance.status,
-        approved_by: statusOverride === 'approved' ? profile?.id ?? null : instance.approved_by,
-        approved_at: statusOverride === 'approved' ? new Date().toISOString() : instance.approved_at
+        approved_by: statusOverride === 'approved' ? profile?.id ?? null : null,
+        approved_at: statusOverride === 'approved' ? now : null
       } as unknown as Record<string, unknown>);
       // Append-only version history for the audit trail.
       await insertRecord('form_instance_versions', {
         form_instance_id: instance.id,
         version: nextVersion,
-        data,
+        data: stampedData,
         saved_by: profile?.id ?? null,
-        saved_at: new Date().toISOString()
+        saved_at: now
       });
       logAudit(statusOverride === 'approved' ? 'form.approved' : 'form.saved', 'form_instance', instance.id, {
         template: instance.template_code,
         version: nextVersion
       });
       setInstance(updated as unknown as FormInstance);
+      setData(stampedData);
       setDirty(false);
       setSavedAt(new Date().toLocaleTimeString());
     } finally {
@@ -115,14 +133,24 @@ export function FormFillPage() {
           >
             <Download size={15} /> PDF
           </Button>
-          {!readOnly && (
+          {!locked && (
             <Button size="sm" onClick={() => void save()} disabled={saving}>
               <Save size={15} /> {saving ? 'Saving…' : 'Save'}
             </Button>
           )}
-          {!readOnly && instance.status !== 'approved' && can('approve_iap') && (
+          {!locked && instance.status !== 'approved' && can('approve_iap') && (
             <Button size="sm" variant="success" onClick={() => void save('approved')} disabled={saving}>
               <CheckCircle2 size={15} /> Approve
+            </Button>
+          )}
+          {locked && (
+            <span className="flex items-center gap-1 text-xs text-amber-300/90">
+              <Lock size={13} /> Locked — {instance.status === 'final' ? 'final' : 'approved'}
+            </span>
+          )}
+          {locked && instance.status === 'approved' && can('approve_iap') && (
+            <Button size="sm" variant="ghost" onClick={() => void save('draft')} disabled={saving}>
+              <RotateCcw size={14} /> Reopen to edit
             </Button>
           )}
         </div>

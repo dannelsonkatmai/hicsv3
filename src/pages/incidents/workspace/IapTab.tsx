@@ -38,6 +38,7 @@ export function IapTab() {
   });
 
   const [busy, setBusy] = useState(false);
+  const [statusError, setStatusError] = useState('');
 
   const currentIap = useMemo(
     () => iaps.find((i) => i.operational_period_id === currentPeriod?.id) ?? iaps.find((i) => i.status !== 'archived') ?? null,
@@ -87,10 +88,12 @@ export function IapTab() {
       form_instance_id: instance.id,
       sort_order: attachedForms.length
     });
+    await invalidateIapIfApproved(currentIap);
     await reloadIapForms();
   };
 
   const detachForm = async (link: IapForm) => {
+    if (currentIap) await invalidateIapIfApproved(currentIap);
     await deleteRecord('iap_forms', link.id);
     await reloadIapForms();
   };
@@ -101,6 +104,7 @@ export function IapTab() {
     const next = [...attachedForms];
     const [moved] = next.splice(index, 1);
     next.splice(target, 0, moved);
+    if (currentIap) await invalidateIapIfApproved(currentIap);
     await Promise.all(
       next.map((link, i) =>
         link.sort_order === i
@@ -111,8 +115,36 @@ export function IapTab() {
     await reloadIapForms();
   };
 
+  /** When the packet composition changes after IC approval, revert the IAP to
+   *  in_review and clear the approval stamp so it must be re-approved. */
+  async function invalidateIapIfApproved(iap: Iap): Promise<void> {
+    if (iap.status !== 'approved' && iap.status !== 'published') return;
+    await saveRecord('iaps', {
+      ...iap,
+      status: 'in_review',
+      approved_by: null,
+      approved_by_name: '',
+      approved_at: null
+    } as unknown as Record<string, unknown>);
+    logAudit('iap.invalidated', 'iap', iap.id, { incident_id: iap.incident_id, reason: 'packet_changed' });
+    await reloadIaps();
+  }
+
   const setStatus = async (status: Iap['status']) => {
     if (!currentIap) return;
+    setStatusError('');
+    if (status === 'approved') {
+      const unapproved = attachedForms.filter((link) => {
+        const inst = instanceFor(link);
+        return inst && inst.status !== 'approved' && inst.status !== 'final';
+      });
+      if (unapproved.length) {
+        setStatusError(
+          `Cannot IC-approve — ${unapproved.length} attached form${unapproved.length > 1 ? 's are' : ' is'} not approved. Use Approve & Assemble, or approve each form first.`
+        );
+        return;
+      }
+    }
     await saveRecord('iaps', {
       ...currentIap,
       status,
@@ -263,6 +295,9 @@ export function IapTab() {
             );
           })}
         </div>
+        {statusError && (
+          <p className="mt-3 rounded-lg border border-amber-800 bg-amber-950/50 p-2 text-xs text-amber-300">{statusError}</p>
+        )}
         {pendingApprovalCount > 0 && (
           <p className="mt-3 text-xs text-amber-300/90">
             {pendingApprovalCount} attached form{pendingApprovalCount > 1 ? 's' : ''} not yet approved — Approve &
